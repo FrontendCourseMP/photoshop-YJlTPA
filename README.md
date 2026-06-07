@@ -5,7 +5,7 @@
 
 ## Ссылка на приложение
 
-https://inspiring-douhua-193c7e.netlify.app/
+https://sweet-biscuit-5f3bf5.netlify.app/
 
 ---
 
