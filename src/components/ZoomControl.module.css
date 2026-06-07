@@ -1,0 +1,33 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select {
+  padding: 3px 6px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  width: 72px;
+}
+
+.range {
+  width: 90px;
+  accent-color: #1a1a1a;
+  cursor: pointer;
+}
+
+.label {
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #666;
+  min-width: 36px;
+}
+
+@media (max-width: 600px) {
+  .range { display: none; }
+}

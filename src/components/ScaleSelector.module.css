@@ -1,0 +1,20 @@
+.wrap { display: flex; align-items: center; gap: 6px; }
+.label { font-size: 11px; color: #888; white-space: nowrap; }
+
+.stepBtn {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 4px;
+  color: #e0e0e0; font-size: 16px; line-height: 1;
+  cursor: pointer; padding: 0; flex-shrink: 0;
+  transition: background 0.12s, border-color 0.12s;
+  user-select: none;
+}
+.stepBtn:hover:not(:disabled) { background: #383838; border-color: #5a8dee; color: #fff; }
+.stepBtn:active:not(:disabled) { background: #1a1a1a; }
+.stepBtn:disabled { opacity: 0.35; cursor: default; }
+
+.select { background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 5px; color: #e0e0e0; font-size: 12px; padding: 3px 6px; outline: none; cursor: pointer; }
+.select:focus { border-color: #5a8dee; }
+.range { width: 90px; accent-color: #5a8dee; cursor: pointer; }
+.value { font-size: 12px; color: #ccc; min-width: 36px; text-align: right; font-family: 'JetBrains Mono', monospace; }

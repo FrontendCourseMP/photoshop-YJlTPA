@@ -1,0 +1,264 @@
+.dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  width: 420px;
+  max-width: 95vw;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  background: #fff;
+  font-family: 'Geologica', sans-serif;
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: rgba(0,0,0,0.4);
+}
+
+/* ─── Заголовок ──────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #888;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+.closeBtn:hover          { background: #f0f0f0; color: #333; }
+.closeBtn:disabled       { opacity: 0.4; cursor: not-allowed; }
+
+/* ─── Тело ───────────────────────────────────────────────── */
+.body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: visible;
+}
+
+/* ─── Блок мегапикселей ──────────────────────────────────── */
+.mpxRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #f8f8f6;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.mpxBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 90px;
+}
+
+.mpxLabel {
+  font-size: 10px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mpxValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.mpxSub {
+  font-size: 11px;
+  color: #888;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.mpxArrow {
+  font-size: 20px;
+  color: #ccc;
+}
+
+/* ─── Строки формы ───────────────────────────────────────── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.label {
+  width: 110px;
+  font-size: 13px;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input {
+  width: 90px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus     { border-color: #1a1a1a; }
+.inputError      { border-color: #e53e3e !important; }
+
+.unit {
+  font-size: 12px;
+  color: #888;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.error {
+  font-size: 11px;
+  color: #e53e3e;
+  width: 100%;
+  margin-left: 120px;
+  margin-top: -8px;
+}
+
+.select {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+.select:focus    { border-color: #1a1a1a; }
+.select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.checkLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #333;
+}
+
+/* ─── Интерполяция + тултип ──────────────────────────────── */
+.interpolationWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: visible;
+  position: relative;
+}
+
+.tooltip {
+  position: relative;
+  cursor: default;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.tooltipText {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: 8px;
+  width: 210px;
+  z-index: 9999;
+  pointer-events: none;
+  white-space: normal;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tooltip:hover .tooltipText { opacity: 1; }
+
+/* ─── Футер ──────────────────────────────────────────────── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #eee;
+}
+
+.processingText {
+  font-size: 12px;
+  color: #888;
+  margin-right: auto;
+}
+
+.btnCancel {
+  padding: 8px 18px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  color: #555;
+  transition: background 0.1s;
+}
+.btnCancel:hover     { background: #f5f5f5; }
+.btnCancel:disabled  { opacity: 0.5; cursor: not-allowed; }
+
+.btnApply {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+  min-width: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+}
+.btnApply:hover    { background: #333; }
+.btnApply:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ─── Спиннер в кнопке ───────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
