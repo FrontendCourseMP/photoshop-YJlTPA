@@ -15,13 +15,8 @@ const PADDING_OPTIONS = [
   { id: 'replicate', label: 'Копирование края'  },
 ];
 
-/**
- * Форматирует число для отображения в ячейке ядра.
- * 0.0625 → "1/16", целые → без дроби, остальные → до 6 знаков.
- */
 function formatKernelValue(v) {
   if (Number.isInteger(v)) return String(v);
-  // Проверяем простые дроби 1/N
   if (v !== 0) {
     const inv = 1 / v;
     const rounded = Math.round(inv);
@@ -32,10 +27,6 @@ function formatKernelValue(v) {
   return parseFloat(v.toFixed(6)).toString();
 }
 
-/**
- * Парсит строку из ячейки ядра.
- * Поддерживает дроби: "1/16" → 0.0625.
- */
 function parseKernelStr(str) {
   const s = str.trim();
   if (s.includes('/')) {
@@ -50,10 +41,6 @@ function parseKernelStr(str) {
   return parseFloat(s);
 }
 
-/**
- * Парсит массив строк в массив чисел.
- * Возвращает { vals: number[], errIndices: number[] }.
- */
 function parseKernelStrings(strs) {
   const errIndices = [];
   const vals = strs.map((s, i) => {
@@ -79,13 +66,11 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
   const [progress,   setProgress]   = useState(0);
   const [errIndices, setErrIndices] = useState([]);
 
-  // Refs для доступа к актуальным значениям из RAF-колбэка без пересоздания функций
   const stateRef = useRef({ kernelStrs, channels, padding, preview });
   useEffect(() => {
     stateRef.current = { kernelStrs, channels, padding, preview };
   });
 
-  // Открываем <dialog> через API
   useEffect(() => {
     const dlg = dialogRef.current;
     if (!dlg) return;
@@ -95,14 +80,12 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     return () => dlg.removeEventListener('close', handleClose);
   }, [onClose]);
 
-  // ─── Расчёт индексов каналов для worker ───────────────────────────────────
   const getChannelIndices = useCallback((ch) => {
     return [...ch]
       .map(c => ['r', 'g', 'b', 'alpha'].indexOf(c))
       .filter(i => i !== -1);
   }, []);
 
-  // ─── Планирование предпросмотра через RAF (throttle) ──────────────────────
   const schedulePreview = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
@@ -113,9 +96,8 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
       if (!pv) return;
 
       const { vals, errIndices: errs } = parseKernelStrings(ks);
-      if (errs.length > 0) return; // не запускаем с битыми значениями
+      if (errs.length > 0) return;
 
-      // Identity-ядро — просто показываем оригинал, worker не нужен
       if (isIdentityKernel(vals)) {
         onPreview(null);
         return;
@@ -128,7 +110,6 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     });
   }, [onPreview, getChannelIndices]);
 
-  // Запускаем предпросмотр при изменении параметров
   useEffect(() => {
     if (!preview) {
       onPreview(null);
@@ -138,12 +119,10 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kernelStrs, channels, padding, preview]);
 
-  // ─── Выбор пресета ────────────────────────────────────────────────────────
   const handlePresetChange = useCallback((id) => {
-    if (id === 'custom') return; // псевдо-опция, нельзя выбрать
+    if (id === 'custom') return;
     setPresetId(id);
     const preset = KERNEL_PRESETS.find(p => p.id === id);
     if (preset) {
@@ -152,24 +131,21 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     }
   }, []);
 
-  // ─── Изменение ячейки ядра ────────────────────────────────────────────────
   const handleCellChange = useCallback((i, val) => {
     setKernelStrs(prev => {
       const next = [...prev];
       next[i] = val;
       return next;
     });
-    // Пользователь изменил ячейку — переключаемся на "пользовательское"
     setPresetId('custom');
     setErrIndices([]);
   }, []);
 
-  // ─── Переключение канала ──────────────────────────────────────────────────
   const handleChannelToggle = useCallback((id) => {
     setChannels(prev => {
       const next = new Set(prev);
       if (next.has(id)) {
-        if (next.size <= 1) return prev; // нельзя снять последний
+        if (next.size <= 1) return prev;
         next.delete(id);
       } else {
         next.add(id);
@@ -178,7 +154,6 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     });
   }, []);
 
-  // ─── Сброс к умолчаниям ───────────────────────────────────────────────────
   const handleReset = useCallback(() => {
     const preset = KERNEL_PRESETS.find(p => p.id === DEFAULT_PRESET_ID);
     setPresetId(DEFAULT_PRESET_ID);
@@ -188,7 +163,6 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     setErrIndices([]);
   }, []);
 
-  // ─── Применение ───────────────────────────────────────────────────────────
   const handleApply = useCallback(async () => {
     const { vals, errIndices: errs } = parseKernelStrings(kernelStrs);
     if (errs.length > 0) {
@@ -199,7 +173,6 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     const chIndices = getChannelIndices(channels);
     if (chIndices.length === 0) return;
 
-    // Отменяем RAF-превью если есть
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
@@ -215,21 +188,19 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
         padding,
         onProgress: (pct) => setProgress(pct),
       });
-      // onApply закрывает диалог через App → setShowKernelDialog(false)
     } catch (err) {
       console.error('KernelDialog apply error:', err);
       setIsApplying(false);
     }
   }, [kernelStrs, channels, padding, onApply, getChannelIndices]);
 
-  // ─── Закрытие ─────────────────────────────────────────────────────────────
   const handleClose = useCallback(() => {
     if (isApplying) return;
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    onPreview(null); // сбрасываем превью к оригиналу
+    onPreview(null);
     dialogRef.current?.close();
   }, [isApplying, onPreview]);
 
@@ -239,10 +210,8 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     if (!checked) onPreview(null);
   }, [onPreview]);
 
-  // Для показа ошибок валидации
   const { errIndices: liveErrIndices } = parseKernelStrings(kernelStrs);
   const hasErrors = errIndices.length > 0 || liveErrIndices.length > 0;
-  // Подсвечиваем ячейки (приоритет — явно зафиксированные errIndices)
   const highlightedErrors = errIndices.length > 0 ? errIndices : liveErrIndices;
 
   return (
@@ -253,7 +222,6 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     >
       <div className={styles.inner} onClick={(e) => e.stopPropagation()}>
 
-        {/* ── Заголовок ── */}
         <div className={styles.header}>
           <span className={styles.title}>Фильтрация ядром (Kernel)</span>
           <button className={styles.closeBtn} onClick={handleClose} disabled={isApplying}>
@@ -263,10 +231,11 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
 
         <div className={styles.body}>
 
-          {/* ── Пресеты ── */}
           <div className={styles.row}>
-            <label className={styles.label}>Пресет</label>
+            <label htmlFor="kernel-preset-select" className={styles.label}>Пресет</label>
             <select
+              id="kernel-preset-select"
+              name="preset"
               className={styles.select}
               value={presetId}
               onChange={(e) => handlePresetChange(e.target.value)}
@@ -281,24 +250,29 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
             </select>
           </div>
 
-          {/* ── Сетка ядра 3×3 ── */}
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Ядро свёртки 3 × 3</div>
             <div className={styles.kernelGrid}>
               {kernelStrs.map((val, i) => (
-                <input
-                  key={i}
-                  type="text"
-                  inputMode="decimal"
-                  className={[
-                    styles.kernelCell,
-                    highlightedErrors.includes(i) ? styles.kernelCellError : '',
-                  ].join(' ')}
-                  value={val}
-                  onChange={(e) => handleCellChange(i, e.target.value)}
-                  disabled={isApplying}
-                  title={`Позиция [${Math.floor(i / 3)}, ${i % 3}]`}
-                />
+                <div key={i} className={styles.cellWrapper}>
+                  <label htmlFor={`kernel-cell-${i}`} className={styles.visuallyHiddenLabel}>
+                    Ячейка ядра {Math.floor(i / 3) + 1}x{(i % 3) + 1}
+                  </label>
+                  <input
+                    id={`kernel-cell-${i}`}
+                    name={`kernelCell-${i}`}
+                    type="text"
+                    inputMode="decimal"
+                    className={[
+                      styles.kernelCell,
+                      highlightedErrors.includes(i) ? styles.kernelCellError : '',
+                    ].join(' ')}
+                    value={val}
+                    onChange={(e) => handleCellChange(i, e.target.value)}
+                    disabled={isApplying}
+                    title={`Позиция [${Math.floor(i / 3)}, ${i % 3}]`}
+                  />
+                </div>
               ))}
             </div>
             {hasErrors && (
@@ -308,13 +282,14 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
             )}
           </div>
 
-          {/* ── Выбор каналов ── */}
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Применить к каналам</div>
             <div className={styles.channelRow}>
               {CHANNEL_OPTIONS.map((ch) => (
-                <label key={ch.id} className={styles.checkLabel}>
+                <label key={ch.id} htmlFor={`kernel-ch-${ch.id}`} className={styles.checkLabel}>
                   <input
+                    id={`kernel-ch-${ch.id}`}
+                    name={`kernelCh-${ch.id}`}
                     type="checkbox"
                     checked={channels.has(ch.id)}
                     onChange={() => handleChannelToggle(ch.id)}
@@ -326,10 +301,11 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
             </div>
           </div>
 
-          {/* ── Стратегия края ── */}
           <div className={styles.row}>
-            <label className={styles.label}>Обработка края</label>
+            <label htmlFor="kernel-padding-select" className={styles.label}>Обработка края</label>
             <select
+              id="kernel-padding-select"
+              name="padding"
               className={styles.select}
               value={padding}
               onChange={(e) => setPadding(e.target.value)}
@@ -341,10 +317,11 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
             </select>
           </div>
 
-          {/* ── Чекбокс предпросмотра ── */}
           <div className={styles.previewRow}>
-            <label className={styles.checkLabel}>
+            <label htmlFor="kernel-preview-checkbox" className={styles.checkLabel}>
               <input
+                id="kernel-preview-checkbox"
+                name="preview"
                 type="checkbox"
                 checked={preview}
                 onChange={handlePreviewToggle}
@@ -354,7 +331,6 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
             </label>
           </div>
 
-          {/* ── Прогресс-бар (только при применении) ── */}
           {isApplying && (
             <div className={styles.progressWrap}>
               <div className={styles.progressLabel}>
@@ -371,7 +347,6 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
 
         </div>
 
-        {/* ── Футер ── */}
         <div className={styles.footer}>
           <button
             className={styles.btnSecondary}

@@ -212,6 +212,7 @@ export default function App() {
           colorInfo={colorInfo}
           onColorInfoClose={() => setColorInfo(null)}
           scale={scale}
+          onScaleChange={handleScaleChange} // ← Связан зум колесом мыши через Ctrl
         />
         {imageInfo && (
           <ChannelPanel

@@ -1,15 +1,19 @@
-/**
- * Запускает построение гистограмм в worker.
- * Возвращает Promise<{ master, r, g, b, alpha }>.
- */
-import { runInWorker } from './workerPool';
+import { buildHistogram } from './levelsUtils';
 
+/**
+ * Не делаем postMessage-transfer для гистограмм, так как это вызывает сериализационный шок OS (400 мс+ блокировки).
+ * Упаковываем цикл как Promise yield-time task - гистограмма проявится гладко в DOM!
+ */
 export async function buildHistogramsAsync(imageData) {
-  // slice() нужен — после transfer буфер в главном потоке станет детачен
-  const copy = imageData.data.slice();
-  return runInWorker(
-    'buildHistograms',
-    { data: copy },
-    [copy.buffer]
-  );
+  return new Promise((resolve) => {
+    setTimeout(() => {
+        resolve({
+          master: buildHistogram(imageData, 'master'),
+          r: buildHistogram(imageData, 'r'),
+          g: buildHistogram(imageData, 'g'),
+          b: buildHistogram(imageData, 'b'),
+          alpha: buildHistogram(imageData, 'alpha')
+        });
+    }, 0);
+  });
 }

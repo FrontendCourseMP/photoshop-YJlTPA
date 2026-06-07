@@ -30,7 +30,16 @@ export default function Toolbar({
         <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleBrowse} disabled={isLoading}>
           {isLoading ? 'Загрузка...' : '+ Файл'}
         </button>
-        <input ref={inputRef} type="file" accept={ACCEPT} onChange={handleChange} style={{ display: 'none' }} />
+        <input 
+          id="toolbar-file-input"
+          name="fileInput"
+          aria-label="Загрузить изображение"
+          ref={inputRef} 
+          type="file" 
+          accept={ACCEPT} 
+          onChange={handleChange} 
+          style={{ display: 'none' }} 
+        />
       </div>
       <div className={styles.divider} />
       <div className={styles.group}>

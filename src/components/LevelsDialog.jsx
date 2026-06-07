@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { buildAllLUTs, defaultLevelsParams }        from '../utils/levelsUtils';
-import { buildHistogramsAsync }                      from '../utils/workerHistogram';
+import { buildHistogramsAsync }                     from '../utils/workerHistogram';
 import styles from './LevelsDialog.module.css';
 
 const CHANNELS = [
@@ -18,30 +18,31 @@ function initParams() {
 
 function drawHistogram(canvas, hist, logScale, channelId) {
   const ctx = canvas.getContext('2d');
-  const W   = canvas.width;
-  const H   = canvas.height;
+  const W   = canvas.width, H = canvas.height;
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#1a1a1a';
+  ctx.fillStyle = '#1e1e1e';
   ctx.fillRect(0, 0, W, H);
 
   let maxRaw = 0;
-  for (let i = 0; i < hist.length; i++) {
-    if (hist[i] > maxRaw) maxRaw = hist[i];
-  }
+  for (let i = 1; i < 255; i++) if (hist[i] > maxRaw) maxRaw = hist[i];
+  if (maxRaw === 0) maxRaw = Math.max(...hist);
   if (maxRaw === 0) return;
 
-  const maxVal  = logScale ? Math.log1p(maxRaw) : maxRaw;
-  const colors  = { r: '#e05555', g: '#3d9a50', b: '#2563be', alpha: '#aaaaaa', master: '#cccccc' };
-  const barColor = colors[channelId] ?? '#cccccc';
-  const barW    = W / 256;
-
-  ctx.fillStyle = barColor;
+  const maxVal = logScale ? Math.log1p(maxRaw) : maxRaw;
+  const cMap = { r: 'rgba(224, 85, 85, 0.75)', g: 'rgba(61, 154, 80, 0.75)', b: 'rgba(37, 99, 190, 0.75)', alpha: 'rgba(170, 170, 170, 0.6)', master: 'rgba(200, 200, 200, 0.65)' };
+  
+  ctx.fillStyle = cMap[channelId] || cMap.master;
+  ctx.beginPath();
+  ctx.moveTo(0, H);
+  
   for (let i = 0; i < 256; i++) {
     const val = logScale ? Math.log1p(hist[i]) : hist[i];
-    const h   = Math.round((val / maxVal) * (H - 2));
-    if (h <= 0) continue;
-    ctx.fillRect(Math.floor(i * barW), H - h, Math.ceil(barW) + 1, h);
+    const norm = Math.min(1, val / maxVal);
+    ctx.lineTo(i * (W / 255), H - norm * (H - 4));
   }
+  ctx.lineTo(W, H);
+  ctx.closePath();
+  ctx.fill();
 }
 
 export default function LevelsDialog({ imageData, onApply, onCancel, onPreview }) {
@@ -50,261 +51,198 @@ export default function LevelsDialog({ imageData, onApply, onCancel, onPreview }
   const [logScale, setLogScale] = useState(false);
   const [preview,  setPreview]  = useState(true);
 
-  const histCanvasRef  = useRef(null);
-  const rafPreviewRef  = useRef(null);
-  const dialogRef      = useRef(null);
-  const paramsRef      = useRef(params);
-  const previewRef     = useRef(preview);
-  const histogramsRef  = useRef(null);
+  const histCanvasRef = useRef(null);
+  const rafPreviewRef = useRef(null);
+  const dialogRef     = useRef(null);
+  
+  const handleCancelRef = useRef(() => {}); // Хранитель безопасного метода
 
-  useEffect(() => { paramsRef.current  = params;  }, [params]);
-  useEffect(() => { previewRef.current = preview; }, [preview]);
-
-  // Открываем диалог
+  // Безопасное подключение чисто через React Component Tree Unmounting
   useEffect(() => {
     const dlg = dialogRef.current;
     if (!dlg) return;
-    dlg.showModal();
-    const handleClose = () => onCancel();
-    dlg.addEventListener('close', handleClose);
-    return () => dlg.removeEventListener('close', handleClose);
-  }, [onCancel]);
+    if (!dlg.open) dlg.showModal();
 
-  // Гистограммы — строим асинхронно в worker при первом открытии
+    // Браузер генерит событие 'cancel' при нажатии "Escape". Ловим и обрубаем на наш cancel.
+    const cancelEvt = (e) => { e.preventDefault(); handleCancelRef.current(); };
+    dlg.addEventListener('cancel', cancelEvt);
+
+    return () => {
+      dlg.removeEventListener('cancel', cancelEvt);
+      // Авто-деструкция HTML элемента если App.js поменял state "уже не отображать этот блок".
+      if (dlg.open) dlg.close();
+    };
+  }, []);
+
   useEffect(() => {
     if (!imageData) return;
     buildHistogramsAsync(imageData).then(hists => {
-      histogramsRef.current = hists;
-      if (histCanvasRef.current) {
-        drawHistogram(histCanvasRef.current, hists[channel], logScale, channel);
-      }
+      if (histCanvasRef.current) drawHistogram(histCanvasRef.current, hists[channel], logScale, channel);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageData]);
+  }, [imageData, channel, logScale]);
 
-  // Перерисовываем гистограмму при смене канала/шкалы
-  useEffect(() => {
-    const hists = histogramsRef.current;
-    if (!histCanvasRef.current || !hists) return;
-    drawHistogram(histCanvasRef.current, hists[channel], logScale, channel);
-  }, [channel, logScale]);
-
-  // Превью — дросселируем через RAF
-  const schedulePreview = useCallback((nextParams) => {
-    if (!previewRef.current) return;
+  const schedulePreview = useCallback((p, isPrevOn) => {
+    if (!isPrevOn) return;
     if (rafPreviewRef.current) cancelAnimationFrame(rafPreviewRef.current);
     rafPreviewRef.current = requestAnimationFrame(() => {
+      onPreview(buildAllLUTs(p));
       rafPreviewRef.current = null;
-      onPreview(buildAllLUTs(nextParams));
     });
   }, [onPreview]);
 
   useEffect(() => {
-    if (!preview) { onPreview(null); return; }
-    schedulePreview(params);
-    return () => {
-      if (rafPreviewRef.current) cancelAnimationFrame(rafPreviewRef.current);
-    };
+    if (!preview) onPreview(null);
+    else schedulePreview(params, true);
+    return () => rafPreviewRef.current && cancelAnimationFrame(rafPreviewRef.current);
   }, [params, preview, schedulePreview, onPreview]);
 
-  const setChannelParam = useCallback((key, value) => {
-    setParams(prev => {
-      const ch = { ...prev[channel] };
-      if (key === 'inBlack') ch.inBlack = Math.min(value, ch.inWhite - 1);
-      else if (key === 'inWhite') ch.inWhite = Math.max(value, ch.inBlack + 1);
-      else ch[key] = value;
-      return { ...prev, [channel]: ch };
-    });
-  }, [channel]);
+  const setChParam = useCallback((k, v) => setParams(prev => {
+    const ch = { ...prev[channel] };
+    if (k === 'inBlack') ch.inBlack = Math.min(v, ch.inWhite - 1);
+    else if (k === 'inWhite') ch.inWhite = Math.max(v, ch.inBlack + 1);
+    else ch[k] = v;
+    return { ...prev, [channel]: ch };
+  }), [channel]);
 
-  const handleReset = useCallback(() => {
-    const next = { ...paramsRef.current, [channel]: defaultLevelsParams() };
-    setParams(next);
-    schedulePreview(next);
-  }, [channel, schedulePreview]);
-
-  const handleResetAll = useCallback(() => {
-    const next = initParams();
-    setParams(next);
-    schedulePreview(next);
-  }, [schedulePreview]);
-
-  const handlePreviewToggle = useCallback((e) => {
-    const checked = e.target.checked;
-    setPreview(checked);
-    if (!checked) onPreview(null);
-  }, [onPreview]);
-
-  const handleApply = useCallback(() => {
-    if (rafPreviewRef.current) { cancelAnimationFrame(rafPreviewRef.current); rafPreviewRef.current = null; }
-    dialogRef.current?.close();
-    onApply(buildAllLUTs(paramsRef.current));
-  }, [onApply]);
-
-  const handleCancel = useCallback(() => {
-    if (rafPreviewRef.current) { cancelAnimationFrame(rafPreviewRef.current); rafPreviewRef.current = null; }
+  // Главная связка Cancel Ref
+  handleCancelRef.current = useCallback(() => {
+    if (rafPreviewRef.current) cancelAnimationFrame(rafPreviewRef.current);
     onPreview(null);
-    dialogRef.current?.close();
-  }, [onPreview]);
+    onCancel();
+  }, [onPreview, onCancel]);
+
+  const handleApplyClick = useCallback(() => {
+    if (rafPreviewRef.current) cancelAnimationFrame(rafPreviewRef.current);
+    onApply(buildAllLUTs(params)); // Закроется уже от родительского React state false
+  }, [onApply, params]);
 
   const cur = params[channel];
 
   return (
-    <dialog ref={dialogRef} className={styles.dialog} onClick={e => { if (e.target === dialogRef.current) handleCancel(); }}>
-      <div className={styles.inner} onClick={e => e.stopPropagation()}>
-
+    <dialog ref={dialogRef} className={styles.dialog}>
+      <div className={styles.inner}>
         <div className={styles.header}>
           <span className={styles.title}>Уровни (Levels)</span>
-          <button className={styles.closeBtn} onClick={handleCancel}>×</button>
+          <button className={styles.closeBtn} onClick={handleCancelRef.current}>×</button>
         </div>
 
         <div className={styles.row}>
-          <label className={styles.label}>Канал</label>
-          <select className={styles.select} value={channel} onChange={e => setChannel(e.target.value)}>
+          <label htmlFor="chSel" className={styles.label}>Канал</label>
+          <select id="chSel" className={styles.select} value={channel} onChange={e => setChannel(e.target.value)}>
             {CHANNELS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
         </div>
 
-        <div className={styles.histWrap}>
-          <canvas ref={histCanvasRef} className={styles.histCanvas} width={256} height={100} />
-        </div>
+        <div className={styles.histWrap}><canvas ref={histCanvasRef} className={styles.histCanvas} width={256} height={100} /></div>
 
         <div className={styles.scaleRow}>
-          <label className={styles.checkLabel}>
-            <input type="checkbox" checked={logScale} onChange={e => setLogScale(e.target.checked)} />
-            Логарифмическая шкала
+          <label htmlFor="logScaleId" className={styles.checkLabel}>
+            <input id="logScaleId" type="checkbox" checked={logScale} onChange={e => setLogScale(e.target.checked)} /> Логарифмическая шкала
           </label>
         </div>
 
         <div className={styles.section}>
           <div className={styles.sectionTitle}>Входные уровни</div>
-          <TripleSlider black={cur.inBlack} white={cur.inWhite} gamma={cur.gamma} onChange={setChannelParam} />
+          <TripleSlider black={cur.inBlack} white={cur.inWhite} gamma={cur.gamma} onChange={setChParam} />
+          
           <div className={styles.inputRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Чёрная точка</label>
-              <input type="number" min={0} max={254} className={styles.numInput} value={cur.inBlack}
-                onChange={e => setChannelParam('inBlack', Math.max(0, Math.min(254, +e.target.value)))} />
+              <label htmlFor="num-blk" className={styles.inputLabel}>Чёрная</label>
+              <input id="num-blk" type="number" min={0} max={254} className={styles.numInput} value={cur.inBlack} onChange={e => setChParam('inBlack', +e.target.value)} />
             </div>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Гамма</label>
-              <input type="number" min={0.1} max={9.9} step={0.1} className={styles.numInput}
-                value={cur.gamma.toFixed(1)}
-                onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setChannelParam('gamma', Math.max(0.1, Math.min(9.9, v))); }} />
+              <label htmlFor="num-gam" className={styles.inputLabel}>Гамма</label>
+              <input id="num-gam" type="number" min={0.1} max={9.9} step={0.1} className={styles.numInput} value={cur.gamma.toFixed(1)} onChange={e => {const v=+e.target.value; if(v)setChParam('gamma', v)}} />
             </div>
             <div className={styles.inputGroup}>
-              <label className={styles.inputLabel}>Белая точка</label>
-              <input type="number" min={1} max={255} className={styles.numInput} value={cur.inWhite}
-                onChange={e => setChannelParam('inWhite', Math.max(1, Math.min(255, +e.target.value)))} />
+              <label htmlFor="num-wht" className={styles.inputLabel}>Белая</label>
+              <input id="num-wht" type="number" min={1} max={255} className={styles.numInput} value={cur.inWhite} onChange={e => setChParam('inWhite', +e.target.value)} />
             </div>
           </div>
         </div>
 
         <div className={styles.previewRow}>
-          <label className={styles.checkLabel}>
-            <input type="checkbox" checked={preview} onChange={handlePreviewToggle} />
-            Предпросмотр (реальное время)
+          <label htmlFor="pTog" className={styles.checkLabel}>
+            <input id="pTog" type="checkbox" checked={preview} onChange={e=>setPreview(e.target.checked)} /> Предпросмотр (в реал. времени)
           </label>
         </div>
 
         <div className={styles.footer}>
-          <button className={styles.btnSecondary} onClick={handleReset}>Сброс канала</button>
-          <button className={styles.btnSecondary} onClick={handleResetAll}>Сброс всего</button>
+          <button className={styles.btnSecondary} onClick={() => setParams({...params, [channel]: defaultLevelsParams()})}>Сброс кан.</button>
+          <button className={styles.btnSecondary} onClick={() => setParams(initParams())}>Сброс всех</button>
           <div style={{ flex: 1 }} />
-          <button className={styles.btnSecondary} onClick={handleCancel}>Отмена</button>
-          <button className={styles.btnPrimary}   onClick={handleApply}>Применить</button>
+          <button className={styles.btnSecondary} onClick={handleCancelRef.current}>Отмена</button>
+          <button className={styles.btnPrimary} onClick={handleApplyClick}>Применить</button>
         </div>
-
       </div>
     </dialog>
   );
 }
 
-/* ─── TripleSlider ─────────────────────────────────────────────────────────── */
+// ──────────────────────────────── Triple Slider Fixes ───────────────────────────────────
 function TripleSlider({ black, white, gamma, onChange }) {
-  const trackRef = useRef(null);
-  const blackRef = useRef(null);
-  const gammaRef = useRef(null);
-  const whiteRef = useRef(null);
-  const stateRef = useRef({ black, white, gamma, onChange });
-  useEffect(() => { stateRef.current = { black, white, gamma, onChange }; });
+  const tRef = useRef(), bRef = useRef(), gRef = useRef(), wRef = useRef();
+  const stRef = useRef({ black, white, gamma, onChange });
+  useEffect(() => { stRef.current = { black, white, gamma, onChange }; });
 
-  const pct    = v => (v / 255) * 100;
+  const pct = v => (v / 255) * 100;
   const midVal = black + (white - black) * Math.pow(0.5, 1.0 / gamma);
 
   useEffect(() => {
-    const nodes = [
-      { el: blackRef.current, marker: 'black' },
-      { el: gammaRef.current, marker: 'gamma' },
-      { el: whiteRef.current, marker: 'white' },
-    ];
-    const handlers = nodes.map(({ el, marker }) => {
-      const fn = (e) => { e.preventDefault(); startDragLogic(marker, e); };
-      el?.addEventListener('touchstart', fn, { passive: false });
-      return { el, fn };
-    });
-    return () => handlers.forEach(({ el, fn }) => el?.removeEventListener('touchstart', fn));
+    const bindEvt = (refObj, mk) => {
+      const f = e => { e.preventDefault(); startD(mk, e); };
+      if(refObj.current) refObj.current.addEventListener('touchstart', f, { passive: false });
+      return f;
+    };
+    const f1 = bindEvt(bRef, 'black'), f2 = bindEvt(gRef, 'gamma'), f3 = bindEvt(wRef, 'white');
+    return () => {
+      bRef.current?.removeEventListener('touchstart', f1);
+      gRef.current?.removeEventListener('touchstart', f2);
+      wRef.current?.removeEventListener('touchstart', f3);
+    };
   }, []);
 
-  function getValueFromX(clientX) {
-    const track = trackRef.current;
-    if (!track) return 0;
-    const rect  = track.getBoundingClientRect();
-    return Math.round(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * 255);
-  }
-
-  function startDragLogic(marker, e) {
-    function onMove(ev) {
-      ev.preventDefault();
-      const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-      const raw     = getValueFromX(clientX);
-      const { black: b, white: w, onChange: cb } = stateRef.current;
-      if (marker === 'black') {
-        cb('inBlack', Math.max(0, Math.min(w - 1, raw)));
-      } else if (marker === 'white') {
-        cb('inWhite', Math.max(b + 1, Math.min(255, raw)));
-      } else {
-        const range = w - b;
-        if (range <= 0) return;
-        const frac     = Math.max(0.001, Math.min(0.999, (raw - b) / range));
-        const newGamma = Math.log(0.5) / Math.log(frac);
-        cb('gamma', parseFloat(Math.max(0.1, Math.min(9.9, newGamma)).toFixed(2)));
+  function startD(mk, evInitial) {
+    function onMove(e) {
+      if(!tRef.current) return;
+      e.preventDefault();
+      const cli = e.touches ? e.touches[0].clientX : e.clientX;
+      const rec = tRef.current.getBoundingClientRect();
+      const raw = Math.round(Math.max(0, Math.min(1, (cli - rec.left)/rec.width))*255);
+      const { black:b, white:w, onChange:cb } = stRef.current;
+      
+      if(mk === 'black') cb('inBlack', Math.max(0, Math.min(w-1, raw)));
+      else if(mk === 'white') cb('inWhite', Math.max(b+1, Math.min(255, raw)));
+      else {
+        if(w - b <= 0) return;
+        const gV = Math.max(0.1, Math.min(9.9, Math.log(0.5) / Math.log(Math.max(0.001, Math.min(0.999, (raw - b) / (w - b))))));
+        cb('gamma', parseFloat(gV.toFixed(2)));
       }
     }
-    function onUp() {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup',   onUp);
-      window.removeEventListener('touchmove', onMove);
-      window.removeEventListener('touchend',  onUp);
+    const up = () => ['mousemove','mouseup','touchmove','touchend'].forEach(n => window.removeEventListener(n, mk==='black'?onMove:up)); // pseudo wrapper code simplifier below is explicit
+    function kill() {
+       window.removeEventListener('mousemove', onMove);
+       window.removeEventListener('mouseup', kill);
+       window.removeEventListener('touchmove', onMove);
+       window.removeEventListener('touchend', kill);
     }
     window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup',   onUp);
+    window.addEventListener('mouseup', kill);
     window.addEventListener('touchmove', onMove, { passive: false });
-    window.addEventListener('touchend',  onUp);
+    window.addEventListener('touchend', kill);
   }
 
   return (
     <div className={styles.tripleSliderWrap}>
-      <div className={styles.gradientTrack} ref={trackRef}>
-        <div ref={blackRef} className={`${styles.marker} ${styles.markerBlack}`}
-          style={{ left: `${pct(black)}%` }}
-          onMouseDown={e => { e.preventDefault(); startDragLogic('black', e); }}
-          title={`Чёрная точка: ${black}`}>
-          <div className={styles.markerArrowDown} style={{ borderTopColor: '#ffffff' }} />
-          <div className={styles.markerVal}>{black}</div>
+      <div className={styles.gradientTrack} ref={tRef}>
+        <div ref={bRef} className={`${styles.marker} ${styles.markerBlack}`} style={{ left:`${pct(black)}%` }} onMouseDown={e => {e.preventDefault(); startD('black')}}>
+          <div className={styles.markerArrowDown} style={{ borderTopColor: '#ffffff' }} /><div className={styles.markerVal}>{black}</div>
         </div>
-        <div ref={gammaRef} className={`${styles.marker} ${styles.markerGamma}`}
-          style={{ left: `${pct(midVal)}%` }}
-          onMouseDown={e => { e.preventDefault(); startDragLogic('gamma', e); }}
-          title={`Гамма: ${gamma.toFixed(2)}`}>
-          <div className={styles.markerArrowDown} style={{ borderTopColor: '#f0c040' }} />
-          <div className={styles.markerVal} style={{ color: '#f0c040' }}>{gamma.toFixed(1)}</div>
+        <div ref={gRef} className={`${styles.marker} ${styles.markerGamma}`} style={{ left:`${pct(midVal)}%` }} onMouseDown={e => {e.preventDefault(); startD('gamma')}}>
+          <div className={styles.markerArrowDown} style={{ borderTopColor: '#f0c040' }} /><div className={styles.markerVal} style={{color:'#f0c040'}}>{gamma.toFixed(1)}</div>
         </div>
-        <div ref={whiteRef} className={`${styles.marker} ${styles.markerWhite}`}
-          style={{ left: `${pct(white)}%` }}
-          onMouseDown={e => { e.preventDefault(); startDragLogic('white', e); }}
-          title={`Белая точка: ${white}`}>
-          <div className={styles.markerArrowDown} style={{ borderTopColor: '#888' }} />
-          <div className={styles.markerVal}>{white}</div>
+        <div ref={wRef} className={`${styles.marker} ${styles.markerWhite}`} style={{ left:`${pct(white)}%` }} onMouseDown={e => {e.preventDefault(); startD('white')}}>
+          <div className={styles.markerArrowDown} style={{ borderTopColor: '#888' }} /><div className={styles.markerVal}>{white}</div>
         </div>
       </div>
     </div>
