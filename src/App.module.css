@@ -6,3 +6,15 @@
   overflow: hidden;
   background: #f5f5f0;
 }
+
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+@media (max-width: 700px) {
+  .workspace {
+    flex-direction: column;
+  }
+}

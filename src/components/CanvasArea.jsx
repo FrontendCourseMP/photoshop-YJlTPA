@@ -1,6 +1,16 @@
+import ColorInfo from './ColorInfo';
 import styles from './CanvasArea.module.css';
 
-export default function CanvasArea({ canvasRef, hasImage, onDrop, isLoading }) {
+export default function CanvasArea({
+  canvasRef,
+  hasImage,
+  onDrop,
+  isLoading,
+  pipetteActive,
+  onPipetteClick,
+  colorInfo,
+  onColorInfoClose,
+}) {
   const handleDragOver = (e) => e.preventDefault();
 
   const handleDrop = (e) => {
@@ -9,8 +19,30 @@ export default function CanvasArea({ canvasRef, hasImage, onDrop, isLoading }) {
     if (file && onDrop) onDrop(file);
   };
 
+  const handleCanvasClick = (e) => {
+    if (!pipetteActive || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+
+    // Пересчёт координат клика с учётом масштабирования canvas через CSS
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const x = Math.floor((e.clientX - rect.left) * scaleX);
+    const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+    const cx = Math.max(0, Math.min(x, canvas.width - 1));
+    const cy = Math.max(0, Math.min(y, canvas.height - 1));
+
+    onPipetteClick(cx, cy);
+  };
+
   return (
-    <div className={styles.area} onDragOver={handleDragOver} onDrop={handleDrop}>
+    <div
+      className={styles.area}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       {!hasImage && !isLoading && (
         <div className={styles.placeholder}>
           <div className={styles.placeholderBox}>
@@ -48,9 +80,14 @@ export default function CanvasArea({ canvasRef, hasImage, onDrop, isLoading }) {
 
       <canvas
         ref={canvasRef}
-        className={styles.canvas}
+        className={`${styles.canvas} ${pipetteActive ? styles.canvasPipette : ''}`}
         style={{ display: hasImage ? 'block' : 'none' }}
+        onClick={handleCanvasClick}
       />
+
+      {colorInfo && (
+        <ColorInfo info={colorInfo} onClose={onColorInfoClose} />
+      )}
     </div>
   );
 }

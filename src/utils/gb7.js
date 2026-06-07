@@ -1,18 +1,3 @@
-/**
- * Кодек формата GrayBit-7 (GB7)
- *
- * Структура файла:
- *   Байты 0-3:   Сигнатура 0x47 0x42 0x37 0x1D (GB7·)
- *   Байт  4:     Версия (0x01)
- *   Байт  5:     Флаг (бит 0 = наличие маски)
- *   Байты 6-7:   Ширина big-endian uint16
- *   Байты 8-9:   Высота big-endian uint16
- *   Байты 10-11: Зарезервировано 0x0000
- *   Байты 12+:   Пиксели, 1 байт каждый
- *     Биты 6-0:  яркость 0-127
- *     Бит 7:     маска (1=непрозрачный, 0=прозрачный)
- */
-
 const SIGNATURE = [0x47, 0x42, 0x37, 0x1D];
 const VERSION = 0x01;
 const HEADER_SIZE = 12;
@@ -38,7 +23,6 @@ export function decodeGB7(buffer) {
   const flagByte = bytes[5];
   const hasMask = (flagByte & 0x01) === 1;
 
-  // big-endian
   const width  = (bytes[6] << 8) | bytes[7];
   const height = (bytes[8] << 8) | bytes[9];
 
@@ -48,7 +32,7 @@ export function decodeGB7(buffer) {
 
   const pixelCount = width * height;
   if (bytes.length - HEADER_SIZE < pixelCount) {
-    throw new Error(`Файл повреждён: нужно ${pixelCount} байт пикселей, доступно ${bytes.length - HEADER_SIZE}`);
+    throw new Error(`Файл повреждён: нужно ${pixelCount} байт, доступно ${bytes.length - HEADER_SIZE}`);
   }
 
   const rgba = new Uint8ClampedArray(pixelCount * 4);
@@ -59,7 +43,6 @@ export function decodeGB7(buffer) {
     const gray8 = Math.round((gray7 / 127) * 255);
     const maskBit = (byte >> 7) & 0x01;
     const alpha = hasMask ? (maskBit === 1 ? 255 : 0) : 255;
-
     const o = i * 4;
     rgba[o]     = gray8;
     rgba[o + 1] = gray8;
@@ -80,7 +63,6 @@ export function encodeGB7(imageData) {
   }
 
   const fileBytes = new Uint8Array(HEADER_SIZE + pixelCount);
-
   fileBytes[0] = 0x47;
   fileBytes[1] = 0x42;
   fileBytes[2] = 0x37;

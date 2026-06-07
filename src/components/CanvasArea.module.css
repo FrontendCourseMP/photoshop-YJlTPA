@@ -2,7 +2,6 @@
   flex: 1;
   overflow: auto;
   position: relative;
-  /* Шахматный фон для прозрачности — светлая версия */
   background-color: #e8e5e0;
   background-image:
     linear-gradient(45deg, #dedad4 25%, transparent 25%),
@@ -11,25 +10,17 @@
     linear-gradient(-45deg, transparent 75%, #dedad4 75%);
   background-size: 16px 16px;
   background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  
+  /* ИЗМЕНЕНА логика сетки: делаем флексом с padding буфером по краям 
+     для защиты от прилипания скроллов */
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
+  padding: 24px;
 }
 
-.area::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-.area::-webkit-scrollbar-track {
-  background: #eee;
-}
-.area::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-.area::-webkit-scrollbar-thumb:hover {
-  background: #bbb;
-}
+.area::-webkit-scrollbar { width: 8px; height: 8px; }
+.area::-webkit-scrollbar-track { background: #eee; }
+.area::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+.area::-webkit-scrollbar-thumb:hover { background: #bbb; }
 
 .placeholder {
   position: absolute;
@@ -52,7 +43,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
 @media (max-width: 480px) {
@@ -117,8 +108,15 @@
 .canvas {
   display: block;
   image-rendering: pixelated;
+  cursor: default;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  
+  /* ИЗМЕНЕНИЯ ЦЕНТРОВКИ: Это самое безопасное 
+     центрирование, которое отлично работает при любом размере окна. */
+  margin: auto;
+  flex-shrink: 0;
+}
+
+.canvasPipette {
   cursor: crosshair;
-  /* небольшая тень чтобы изображение не сливалось с фоном */
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  margin: 24px;
 }
