@@ -1,9 +1,6 @@
-// Определение типа изображения и генерация данных для панели каналов
-
 export function getChannelCount(imageData) {
   const { data, width, height } = imageData;
   const pixelCount = width * height;
-
   let hasColor = false;
   let hasAlpha = false;
 
@@ -24,9 +21,7 @@ export function getChannelCount(imageData) {
 }
 
 export function getChannelDescriptors(channelCount) {
-  if (channelCount === 1) {
-    return [{ id: 'gray', label: 'Gray', color: null }];
-  }
+  if (channelCount === 1) return [{ id: 'gray', label: 'Gray', color: null }];
   if (channelCount === 2) {
     return [
       { id: 'gray',  label: 'Gray',  color: null },
@@ -48,89 +43,80 @@ export function getChannelDescriptors(channelCount) {
   ];
 }
 
-// Grayscale-превью одного канала для миниатюры
 export function buildChannelPreview(sourceData, channelId) {
   const { data, width, height } = sourceData;
-  const pixelCount = width * height;
-  const out = new Uint8ClampedArray(pixelCount * 4);
+  const out = new Uint8ClampedArray(data.length);
 
-  for (let i = 0; i < pixelCount; i++) {
-    const r = data[i * 4];
-    const g = data[i * 4 + 1];
-    const b = data[i * 4 + 2];
-    const a = data[i * 4 + 3];
-    let v = 0;
-
+  for (let i = 0; i < data.length; i += 4) {
     switch (channelId) {
-      case 'r':     v = r; break;
-      case 'g':     v = g; break;
-      case 'b':     v = b; break;
-      case 'alpha': v = a; break;
-      case 'gray':
-      default:      v = Math.round(0.299 * r + 0.587 * g + 0.114 * b); break;
+      case 'r':
+        out[i] = data[i]; out[i+1] = 0; out[i+2] = 0;
+        break;
+      case 'g':
+        out[i] = 0; out[i+1] = data[i+1]; out[i+2] = 0;
+        break;
+      case 'b':
+        out[i] = 0; out[i+1] = 0; out[i+2] = data[i+2];
+        break;
+      case 'alpha': {
+        const v = data[i+3];
+        out[i] = out[i+1] = out[i+2] = v;
+        break;
+      }
+      default: {
+        const v = (data[i] * 76 + data[i+1] * 150 + data[i+2] * 28) >> 8;
+        out[i] = out[i+1] = out[i+2] = v;
+      }
     }
-
-    out[i * 4]     = v;
-    out[i * 4 + 1] = v;
-    out[i * 4 + 2] = v;
-    out[i * 4 + 3] = 255;
+    out[i+3] = 255;
   }
-
   return new ImageData(out, width, height);
 }
 
-// Применяет маску активных каналов, не трогает оригинал
-export function applyChannelMask(sourceData, activeChannels, channelCount) {
+export function applyChannelMask(sourceData, activeChannels, channelCount, overrideLuts = null) {
   const { data, width, height } = sourceData;
-  const pixelCount = width * height;
-  const out = new Uint8ClampedArray(pixelCount * 4);
+  const out = new Uint8ClampedArray(data.length);
 
-  const useR     = activeChannels.has('r');
-  const useG     = activeChannels.has('g');
-  const useB     = activeChannels.has('b');
+  const useR = activeChannels.has('r');
+  const useG = activeChannels.has('g');
+  const useB = activeChannels.has('b');
   const useAlpha = activeChannels.has('alpha');
-  const useGray  = activeChannels.has('gray');
-
+  const useGray = activeChannels.has('gray');
   const onlyAlpha = activeChannels.size === 1 && useAlpha;
 
-  for (let i = 0; i < pixelCount; i++) {
-    const r = data[i * 4];
-    const g = data[i * 4 + 1];
-    const b = data[i * 4 + 2];
-    const a = data[i * 4 + 3];
+  const rLut = overrideLuts?.r;
+  const gLut = overrideLuts?.g;
+  const bLut = overrideLuts?.b;
+  const aLut = overrideLuts?.alpha;
 
-    // ОТРЕДАКТИРОВАНО: При полном выключении рисунок становится
-    // абсолютно чёрным цветом без альфы (R,G,B = 0 | Alpha = 255)
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+
+    if (overrideLuts) {
+      r = rLut[r]; g = gLut[g]; b = bLut[b]; a = aLut[a];
+    }
+
     if (activeChannels.size === 0) {
-      out[i * 4]     = 0;
-      out[i * 4 + 1] = 0;
-      out[i * 4 + 2] = 0;
-      out[i * 4 + 3] = 255;
+      out[i] = out[i+1] = out[i+2] = 0; out[i+3] = 255;
       continue;
     }
 
     if (onlyAlpha) {
-      out[i * 4]     = a;
-      out[i * 4 + 1] = a;
-      out[i * 4 + 2] = a;
-      out[i * 4 + 3] = 255;
+      out[i] = out[i+1] = out[i+2] = a; out[i+3] = 255;
       continue;
     }
 
     if (channelCount <= 2) {
-      const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+      const gray = (r * 76 + g * 150 + b * 28) >> 8;
       const gv = useGray ? gray : 0;
-      out[i * 4]     = gv;
-      out[i * 4 + 1] = gv;
-      out[i * 4 + 2] = gv;
-      out[i * 4 + 3] = (channelCount === 2) ? (useAlpha ? a : 255) : 255;
+      out[i] = out[i+1] = out[i+2] = gv;
+      out[i+3] = (channelCount === 2) ? (useAlpha ? a : 255) : 255;
     } else {
-      out[i * 4]     = useR ? r : 0;
-      out[i * 4 + 1] = useG ? g : 0;
-      out[i * 4 + 2] = useB ? b : 0;
-      out[i * 4 + 3] = (channelCount === 4) ? (useAlpha ? a : 255) : 255;
+      out[i]   = useR ? r : 0;
+      out[i+1] = useG ? g : 0;
+      out[i+2] = useB ? b : 0;
+      out[i+3] = (channelCount === 4) ? (useAlpha ? a : 255) : 255;
     }
   }
-
   return new ImageData(out, width, height);
 }

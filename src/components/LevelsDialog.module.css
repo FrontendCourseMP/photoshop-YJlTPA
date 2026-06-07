@@ -1,0 +1,149 @@
+.dialog {
+  border: 1px solid #ddd9d3;
+  border-radius: 10px;
+  padding: 0;
+  background: #f5f5f0;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.22);
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  outline: none;
+  font-family: 'Geologica', 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  color: #1a1a1a;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
+/* Браузерный backdrop вместо ручного div-оверлея */
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid #e8e5e0;
+}
+
+.title { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+
+.closeBtn {
+  background: none; border: none; font-size: 20px; line-height: 1;
+  color: #888; cursor: pointer; padding: 0 2px; transition: color 0.12s;
+}
+.closeBtn:hover { color: #1a1a1a; }
+
+.row { display: flex; align-items: center; gap: 10px; padding: 10px 16px 4px; }
+
+.label {
+  font-size: 11px; color: #888; white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+.select {
+  flex: 1; height: 28px; background: #ffffff; border: 1px solid #ddd9d3;
+  border-radius: 5px; padding: 0 8px; font-size: 13px; color: #1a1a1a;
+  cursor: pointer; outline: none;
+}
+.select:focus { border-color: #2563be; box-shadow: 0 0 0 2px rgba(37,99,190,0.15); }
+
+.histWrap {
+  margin: 6px 16px 0; border: 1px solid #ddd9d3;
+  border-radius: 5px; overflow: hidden; line-height: 0;
+}
+.histCanvas { width: 100%; height: 100px; display: block; }
+
+.scaleRow { padding: 6px 16px 2px; }
+
+.checkLabel {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #555; cursor: pointer; user-select: none;
+}
+.checkLabel input { cursor: pointer; accent-color: #2563be; }
+
+.section { padding: 10px 16px 6px; }
+
+.sectionTitle {
+  font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 8px;
+}
+
+.tripleSliderWrap { padding: 28px 8px 8px; position: relative; }
+
+.gradientTrack {
+  position: relative; height: 14px; border-radius: 4px;
+  background: linear-gradient(to right, #000000, #ffffff);
+  border: 1px solid #ccc; margin: 0 8px; user-select: none;
+}
+
+.marker {
+  position: absolute; top: -20px; transform: translateX(-50%);
+  cursor: ew-resize; display: flex; flex-direction: column;
+  align-items: center; touch-action: none; z-index: 2;
+}
+.markerBlack { z-index: 3; }
+.markerGamma { z-index: 4; }
+.markerWhite { z-index: 3; }
+
+.markerArrowDown {
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 10px solid #ffffff;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+}
+
+.markerVal {
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  color: #444; position: absolute; top: -14px; white-space: nowrap;
+}
+
+.inputRow { display: flex; gap: 8px; margin-top: 14px; }
+.inputGroup { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+
+.inputLabel {
+  font-size: 10px; font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase; letter-spacing: 0.04em; color: #999;
+}
+
+.numInput {
+  height: 28px; background: #ffffff; border: 1px solid #ddd9d3;
+  border-radius: 5px; padding: 0 6px; font-size: 13px;
+  font-family: 'JetBrains Mono', monospace; color: #1a1a1a;
+  width: 100%; text-align: center; outline: none;
+}
+.numInput:focus { border-color: #2563be; box-shadow: 0 0 0 2px rgba(37,99,190,0.12); }
+
+.previewRow { padding: 4px 16px 8px; border-top: 1px solid #eee; }
+
+.footer {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px 14px; border-top: 1px solid #e8e5e0;
+}
+
+.btnPrimary {
+  height: 30px; padding: 0 16px; background: #1a1a1a; border: 1px solid #1a1a1a;
+  color: #f5f5f0; border-radius: 6px; font-size: 12px;
+  font-family: 'JetBrains Mono', monospace; font-weight: 500;
+  cursor: pointer; letter-spacing: 0.03em; transition: background 0.12s;
+}
+.btnPrimary:hover { background: #333; }
+
+.btnSecondary {
+  height: 30px; padding: 0 12px; background: #f0ede8; border: 1px solid #ddd9d3;
+  color: #444; border-radius: 6px; font-size: 12px;
+  font-family: 'JetBrains Mono', monospace; cursor: pointer;
+  letter-spacing: 0.03em; transition: background 0.12s, border-color 0.12s;
+}
+.btnSecondary:hover { background: #e8e4de; border-color: #c8c4be; color: #1a1a1a; }

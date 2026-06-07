@@ -3,7 +3,15 @@ import styles from './Toolbar.module.css';
 
 const ACCEPT = '.png,.jpg,.jpeg,.gb7';
 
-export default function Toolbar({ onFileLoad, onDownload, hasImage, isLoading, pipetteActive, onPipetteToggle }) {
+export default function Toolbar({
+  onFileLoad,
+  onDownload,
+  hasImage,
+  isLoading,
+  pipetteActive,
+  onPipetteToggle,
+  onLevelsOpen,
+}) {
   const inputRef = useRef(null);
 
   const handleBrowse = () => inputRef.current?.click();
@@ -21,7 +29,7 @@ export default function Toolbar({ onFileLoad, onDownload, hasImage, isLoading, p
         </div>
         <div>
           <div className={styles.brandName}>PhotoLab</div>
-          <div className={styles.brandSub}>Лаб. работа №2</div>
+          <div className={styles.brandSub}>Лаб. работа №3</div>
         </div>
       </div>
 
@@ -69,6 +77,24 @@ export default function Toolbar({ onFileLoad, onDownload, hasImage, isLoading, p
             />
           </svg>
           Пипетка
+        </button>
+
+        <button
+          className={styles.btn}
+          onClick={onLevelsOpen}
+          disabled={!hasImage || isLoading}
+          title="Градационная коррекция — инструмент Уровни"
+        >
+          <svg
+            width="12" height="12" viewBox="0 0 14 14" fill="none"
+            style={{ marginRight: 5, verticalAlign: 'middle', display: 'inline-block' }}
+          >
+            <rect x="1" y="9" width="2" height="4" fill="currentColor" opacity="0.5"/>
+            <rect x="4" y="6" width="2" height="7" fill="currentColor" opacity="0.7"/>
+            <rect x="7" y="3" width="2" height="10" fill="currentColor"/>
+            <rect x="10" y="5" width="2" height="8" fill="currentColor" opacity="0.7"/>
+          </svg>
+          Уровни
         </button>
       </div>
 
