@@ -1,0 +1,156 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-bottom: 1px solid #e0ddd8;
+  padding: 0 16px;
+  height: 52px;
+  flex-shrink: 0;
+  gap: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.toolbar::-webkit-scrollbar {
+  height: 2px;
+}
+.toolbar::-webkit-scrollbar-thumb {
+  background: #ddd;
+}
+
+/* Адаптив: на узких экранах разрешаем горизонтальный скролл */
+@media (max-width: 600px) {
+  .toolbar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 10px;
+    height: 48px;
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.brandMark {
+  width: 22px;
+  height: 22px;
+  background: #1a1a1a;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brandMarkInner {
+  width: 10px;
+  height: 10px;
+  background: #f5f5f0;
+  border-radius: 2px;
+  opacity: 0.9;
+}
+
+.brandName {
+  font-family: 'Geologica', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
+}
+
+.brandSub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #aaa;
+  letter-spacing: 0.02em;
+}
+
+.divider {
+  width: 1px;
+  height: 22px;
+  background: #e8e5e0;
+  margin: 0 14px;
+  flex-shrink: 0;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.groupLabel {
+  font-size: 10px;
+  color: #aaa;
+  margin-right: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .groupLabel {
+    display: none;
+  }
+}
+
+.btn {
+  height: 30px;
+  padding: 0 12px;
+  background: #f0ede8;
+  border: 1px solid #ddd9d3;
+  color: #444;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+  letter-spacing: 0.03em;
+}
+
+.btn:hover:not(:disabled) {
+  background: #e8e4de;
+  border-color: #c8c4be;
+  color: #1a1a1a;
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+  color: #f5f5f0;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #2d2d2d;
+  border-color: #2d2d2d;
+  color: #ffffff;
+}
+
+.btnAccent {
+  background: #eef4ff;
+  border-color: #c5d8f5;
+  color: #2563be;
+}
+
+.btnAccent:hover:not(:disabled) {
+  background: #ddeaff;
+  border-color: #9ab9ed;
+  color: #1a4fa0;
+}

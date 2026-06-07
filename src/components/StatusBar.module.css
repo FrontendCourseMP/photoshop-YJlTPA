@@ -1,0 +1,74 @@
+.bar {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border-top: 1px solid #e0ddd8;
+  padding: 0 16px;
+  height: 30px;
+  flex-shrink: 0;
+  overflow: hidden;
+  gap: 0;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Адаптив: на узких экранах скрываем часть полей */
+@media (max-width: 600px) {
+  .bar {
+    overflow-x: auto;
+    padding: 0 10px;
+  }
+}
+
+.barError {
+  background: #fff8f8;
+  border-top-color: #f5c0c0;
+  color: #c0392b;
+}
+
+.errorIcon {
+  margin-right: 6px;
+  font-size: 11px;
+  color: #c0392b;
+}
+
+.hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #bbb;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #555;
+  white-space: nowrap;
+}
+
+.label {
+  color: #bbb;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.badge {
+  background: #eef4ff;
+  color: #2563be;
+  border: 1px solid #c5d8f5;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.sep {
+  width: 1px;
+  height: 14px;
+  background: #e8e5e0;
+  margin: 0 12px;
+  flex-shrink: 0;
+}

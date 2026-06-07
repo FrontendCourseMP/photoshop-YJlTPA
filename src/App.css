@@ -1,0 +1,170 @@
+/* Основные стили приложения — редактор изображений */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  background: #1e1e1e;
+  color: #cccccc;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Основной контейнер приложения */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Заголовок */
+.app__header {
+  background: #2d2d2d;
+  border-bottom: 1px solid #3a3a3a;
+  padding: 6px 12px;
+  flex-shrink: 0;
+}
+
+.app__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+/* Индикатор загрузки */
+.app__loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #2d2d2d;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 12px 24px;
+  z-index: 100;
+  color: #e0e0e0;
+}
+
+/* Главная область */
+.app__main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+/* Панель инструментов */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3a3a3a;
+  padding: 4px 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar__label {
+  color: #999;
+  margin-right: 4px;
+  font-size: 12px;
+}
+
+.toolbar__btn {
+  background: #3a3a3a;
+  border: 1px solid #555;
+  color: #cccccc;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+
+.toolbar__btn:hover:not(:disabled) {
+  background: #4a4a4a;
+  border-color: #777;
+}
+
+.toolbar__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Область canvas */
+.canvas-area {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  background: #252525;
+  background-image:
+    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
+    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  position: relative;
+}
+
+.canvas-area__placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #555;
+  pointer-events: none;
+}
+
+.canvas-area__formats {
+  font-size: 11px;
+  margin-top: 6px;
+  color: #444;
+}
+
+.canvas-area__canvas {
+  display: block;
+  /* canvas отображается в реальном размере, прокрутка если не помещается */
+  max-width: none;
+}
+
+/* Строка состояния */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #007acc;
+  color: #ffffff;
+  padding: 2px 12px;
+  font-size: 12px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 22px;
+}
+
+.status-bar--error {
+  background: #a33;
+}
+
+.status-bar__item {
+  padding: 0 6px;
+}
+
+.status-bar__separator {
+  color: rgba(255,255,255,0.4);
+}
