@@ -3,8 +3,12 @@ import styles from './Toolbar.module.css';
 
 const ACCEPT = '.png,.jpg,.jpeg,.gb7';
 
-export default function Toolbar({ onFileLoad, onDownload, hasImage, isLoading, pipetteActive, onPipetteToggle, onLevelsOpen, onResizeOpen }) {
-  const inputRef = useRef(null);
+export default function Toolbar({
+  onFileLoad, onDownload, hasImage, isLoading,
+  pipetteActive, onPipetteToggle,
+  onLevelsOpen, onResizeOpen, onKernelOpen,
+}) {
+  const inputRef   = useRef(null);
   const handleBrowse = () => inputRef.current?.click();
   const handleChange = (e) => {
     const file = e.target.files?.[0];
@@ -17,7 +21,7 @@ export default function Toolbar({ onFileLoad, onDownload, hasImage, isLoading, p
         <div className={styles.brandMark}><div className={styles.brandMarkInner} /></div>
         <div>
           <div className={styles.brandName}>PhotoLab</div>
-          <div className={styles.brandSub}>Лаб. работа №4</div>
+          <div className={styles.brandSub}>Лаб. работа №5</div>
         </div>
       </div>
       <div className={styles.divider} />
@@ -60,6 +64,21 @@ export default function Toolbar({ onFileLoad, onDownload, hasImage, isLoading, p
             <path d="M2 2 L12 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
           </svg>
           Размер
+        </button>
+        <button className={styles.btn} onClick={onKernelOpen} disabled={!hasImage || isLoading}>
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none"
+            style={{ marginRight: 5, verticalAlign: 'middle', display: 'inline-block' }}>
+            <rect x="1" y="1" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <rect x="5.5" y="1" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <rect x="10" y="1" width="3" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <rect x="1" y="5.5" width="4" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <rect x="5.5" y="5.5" width="4" height="4" rx="1" fill="currentColor" opacity="0.8"/>
+            <rect x="10" y="5.5" width="3" height="4" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <rect x="1" y="10" width="4" height="3" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <rect x="5.5" y="10" width="4" height="3" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+            <rect x="10" y="10" width="3" height="3" rx="1" stroke="currentColor" strokeWidth="1.2" fill="none"/>
+          </svg>
+          Ядро
         </button>
       </div>
       <div className={styles.divider} />

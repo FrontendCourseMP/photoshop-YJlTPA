@@ -5,6 +5,7 @@ import ChannelPanel  from './components/ChannelPanel';
 import StatusBar     from './components/StatusBar';
 import ResizeDialog  from './components/ResizeDialog';
 import LevelsDialog  from './components/LevelsDialog';
+import KernelDialog  from './components/KernelDialog';
 import ScaleSelector from './components/ScaleSelector';
 import { useCanvas } from './hooks/useCanvas';
 import { loadImage } from './utils/imageLoader';
@@ -23,6 +24,8 @@ export default function App() {
     getOriginalData,
     previewLevels,
     applyLevels,
+    previewKernel,
+    applyKernel,
     applyScale,
     resizeImage,
   } = useCanvas();
@@ -39,10 +42,10 @@ export default function App() {
   const [pipetteActive, setPipetteActive] = useState(false);
   const [colorInfo, setColorInfo]         = useState(null);
 
-  const [showLevelsDialog, setShowLevelsDialog]   = useState(false);
-  const [showResizeDialog, setShowResizeDialog]   = useState(false);
+  const [showLevelsDialog,  setShowLevelsDialog]  = useState(false);
+  const [showResizeDialog,  setShowResizeDialog]  = useState(false);
+  const [showKernelDialog,  setShowKernelDialog]  = useState(false);
 
-  // true когда идёт тяжёлая async операция — блокируем UI
   const [isBusy, setIsBusy] = useState(false);
 
   const areaRef = useRef(null);
@@ -55,16 +58,15 @@ export default function App() {
     setPipetteActive(false);
     setShowLevelsDialog(false);
     setShowResizeDialog(false);
+    setShowKernelDialog(false);
 
     try {
       const result = await loadImage(file);
-
       let initialScale = 100;
       if (areaRef.current) {
         const { clientWidth, clientHeight } = areaRef.current;
         initialScale = fitScale(result.width, result.height, clientWidth, clientHeight);
       }
-
       drawImage(result.imageData, initialScale);
       setScale(initialScale);
 
@@ -101,8 +103,7 @@ export default function App() {
   const handleChannelToggle = useCallback((channelId) => {
     setActiveChannels(prev => {
       const next = new Set(prev);
-      if (next.has(channelId)) next.delete(channelId);
-      else next.add(channelId);
+      if (next.has(channelId)) next.delete(channelId); else next.add(channelId);
       return next;
     });
   }, []);
@@ -116,30 +117,20 @@ export default function App() {
   const handlePipetteClick = useCallback((x, y) => {
     const original = getOriginalData();
     if (!original) return;
-
     const cx = Math.max(0, Math.min(x, original.width  - 1));
     const cy = Math.max(0, Math.min(y, original.height - 1));
-
     const idx = (cy * original.width + cx) * 4;
-    const r   = original.data[idx];
-    const g   = original.data[idx + 1];
-    const b   = original.data[idx + 2];
-    const a   = original.data[idx + 3];
-
+    const r = original.data[idx], g = original.data[idx+1],
+          b = original.data[idx+2], a = original.data[idx+3];
     if (r === undefined) return;
-
     setColorInfo({ x: cx, y: cy, r, g, b, a, lab: rgbToLab(r, g, b) });
   }, [getOriginalData]);
 
   // ─── Уровни ───────────────────────────────────────────────────────────────
   const handleLevelsApply = useCallback(async (luts) => {
     setIsBusy(true);
-    try {
-      await applyLevels(luts);
-    } finally {
-      setIsBusy(false);
-      setShowLevelsDialog(false);
-    }
+    try { await applyLevels(luts); }
+    finally { setIsBusy(false); setShowLevelsDialog(false); }
   }, [applyLevels]);
 
   const handleLevelsCancel = useCallback(() => {
@@ -153,19 +144,14 @@ export default function App() {
     try {
       const resized = await resizeImage(width, height, methodId);
       if (!resized) return;
-
       let newScale = 100;
       if (areaRef.current) {
         const { clientWidth, clientHeight } = areaRef.current;
         newScale = fitScale(resized.width, resized.height, clientWidth, clientHeight);
       }
-
-      // applyScale рисует в worker — зум отображения всегда билинейный
       applyScale(newScale);
       setScale(newScale);
-
       setImageInfo(prev => ({ ...prev, width: resized.width, height: resized.height }));
-
       const count = getChannelCount(resized);
       const descs = getChannelDescriptors(count);
       setChannelCount(count);
@@ -176,6 +162,18 @@ export default function App() {
       setShowResizeDialog(false);
     }
   }, [resizeImage, applyScale]);
+
+  // ─── Ядро свёртки ─────────────────────────────────────────────────────────
+  const handleKernelApply = useCallback(async (params) => {
+    setIsBusy(true);
+    try { await applyKernel(params); }
+    finally { setIsBusy(false); setShowKernelDialog(false); }
+  }, [applyKernel]);
+
+  const handleKernelClose = useCallback(() => {
+    previewKernel(null);
+    setShowKernelDialog(false);
+  }, [previewKernel]);
 
   // ─── Скачивание ───────────────────────────────────────────────────────────
   const handleDownload = useCallback((format) => {
@@ -198,6 +196,7 @@ export default function App() {
         onPipetteToggle={() => { setPipetteActive(p => !p); setColorInfo(null); }}
         onLevelsOpen={() => setShowLevelsDialog(true)}
         onResizeOpen={() => setShowResizeDialog(true)}
+        onKernelOpen={() => setShowKernelDialog(true)}
       />
 
       <div className={styles.workspace}>
@@ -225,11 +224,7 @@ export default function App() {
       </div>
 
       <StatusBar imageInfo={imageInfo} error={error}>
-        <ScaleSelector
-          scale={scale}
-          onChange={handleScaleChange}
-          disabled={isBusy}
-        />
+        <ScaleSelector scale={scale} onChange={handleScaleChange} disabled={isBusy} />
       </StatusBar>
 
       {showLevelsDialog && imageInfo && (
@@ -246,6 +241,15 @@ export default function App() {
           imageData={getOriginalData()}
           onApply={handleResizeApply}
           onClose={() => setShowResizeDialog(false)}
+        />
+      )}
+
+      {showKernelDialog && imageInfo && (
+        <KernelDialog
+          imageData={getOriginalData()}
+          onApply={handleKernelApply}
+          onClose={handleKernelClose}
+          onPreview={previewKernel}
         />
       )}
     </div>

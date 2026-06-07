@@ -1,0 +1,318 @@
+.dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  width: 440px;
+  max-width: 95vw;
+  max-height: 92vh;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.22);
+  background: #f5f5f0;
+  font-family: 'Geologica', 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  color: #1a1a1a;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  max-height: 92vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Заголовок ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid #e8e5e0;
+  position: sticky;
+  top: 0;
+  background: #f5f5f0;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #888;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 0.1s, color 0.1s;
+}
+.closeBtn:hover:not(:disabled) {
+  background: #e8e4de;
+  color: #1a1a1a;
+}
+.closeBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Тело ── */
+.body {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.label {
+  width: 130px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
+.select {
+  flex: 1;
+  height: 30px;
+  background: #ffffff;
+  border: 1px solid #ddd9d3;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: #1a1a1a;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  min-width: 0;
+}
+.select:focus {
+  border-color: #2563be;
+  box-shadow: 0 0 0 2px rgba(37, 99, 190, 0.15);
+}
+.select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f0ede8;
+}
+
+/* ── Секция ── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #999;
+}
+
+/* ── Сетка ядра 3×3 ── */
+.kernelGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.kernelCell {
+  height: 38px;
+  background: #ffffff;
+  border: 1px solid #ddd9d3;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #1a1a1a;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  padding: 0 4px;
+  width: 100%;
+}
+.kernelCell:focus {
+  border-color: #2563be;
+  box-shadow: 0 0 0 2px rgba(37, 99, 190, 0.12);
+}
+.kernelCell:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f0ede8;
+}
+.kernelCellError {
+  border-color: #e53e3e !important;
+  background: #fff5f5;
+  box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.1) !important;
+}
+
+.kernelError {
+  font-size: 11px;
+  color: #e53e3e;
+  padding: 2px 0;
+  line-height: 1.4;
+}
+
+/* ── Каналы ── */
+.channelRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.checkLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #444;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.checkLabel input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: #2563be;
+  width: 14px;
+  height: 14px;
+}
+.checkLabel input[type='checkbox']:disabled {
+  cursor: not-allowed;
+}
+
+/* ── Предпросмотр ── */
+.previewRow {
+  padding: 6px 0 2px;
+  border-top: 1px solid #e8e5e0;
+}
+
+/* ── Прогресс ── */
+.progressWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.progressLabel {
+  font-size: 12px;
+  color: #555;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.progressTrack {
+  height: 6px;
+  background: #e0ddd8;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #2563be, #3b82f6);
+  border-radius: 3px;
+  transition: width 0.15s linear;
+  min-width: 2px;
+}
+
+/* ── Футер ── */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid #e8e5e0;
+  position: sticky;
+  bottom: 0;
+  background: #f5f5f0;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.btnPrimary {
+  height: 32px;
+  padding: 0 20px;
+  background: #1a1a1a;
+  border: 1px solid #1a1a1a;
+  color: #f5f5f0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.12s;
+  min-width: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btnPrimary:hover:not(:disabled) {
+  background: #333;
+}
+.btnPrimary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  height: 32px;
+  padding: 0 14px;
+  background: #f0ede8;
+  border: 1px solid #ddd9d3;
+  color: #444;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.btnSecondary:hover:not(:disabled) {
+  background: #e8e4de;
+  border-color: #c8c4be;
+  color: #1a1a1a;
+}
+.btnSecondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Спиннер в кнопке Применить ── */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
