@@ -1,19 +1,18 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import Toolbar       from './components/Toolbar';
-import CanvasArea    from './components/CanvasArea';
-import ChannelPanel  from './components/ChannelPanel';
-import StatusBar     from './components/StatusBar';
-import ResizeDialog  from './components/ResizeDialog';
-import LevelsDialog  from './components/LevelsDialog';
-import KernelDialog  from './components/KernelDialog';
+import Toolbar from './components/Toolbar';
+import CanvasArea from './components/CanvasArea';
+import ChannelPanel from './components/ChannelPanel';
+import StatusBar from './components/StatusBar';
+import ResizeDialog from './components/ResizeDialog';
+import LevelsDialog from './components/LevelsDialog';
+import KernelDialog from './components/KernelDialog';
 import ScaleSelector from './components/ScaleSelector';
 import { useCanvas } from './hooks/useCanvas';
 import { loadImage } from './utils/imageLoader';
 import { downloadAsPNG, downloadAsJPEG, downloadAsGB7 } from './utils/imageDownloader';
-import { getChannelCount, getChannelDescriptors }       from './utils/channelUtils';
-import { rgbToLab }  from './utils/colorUtils';
-import { fitScale }  from './utils/scaleUtils';
-import styles        from './App.module.css';
+import { rgbToLab } from './utils/colorUtils';
+import { fitScale } from './utils/scaleUtils';
+import styles from './App.module.css';
 
 export default function App() {
   const {
@@ -30,27 +29,26 @@ export default function App() {
     resizeImage,
   } = useCanvas();
 
-  const [imageInfo, setImageInfo]   = useState(null);
-  const [error, setError]           = useState(null);
-  const [isLoading, setIsLoading]   = useState(false);
-  const [scale, setScale]           = useState(100);
+  const [imageInfo, setImageInfo] = useState(null);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [scale, setScale] = useState(100);
 
   const [channelDescriptors, setChannelDescriptors] = useState(null);
-  const [activeChannels, setActiveChannels]         = useState(new Set());
-  const [channelCount, setChannelCount]             = useState(0);
+  const [activeChannels, setActiveChannels] = useState(new Set());
+  const [channelCount, setChannelCount] = useState(0);
 
   const [pipetteActive, setPipetteActive] = useState(false);
-  const [colorInfo, setColorInfo]         = useState(null);
+  const [colorInfo, setColorInfo] = useState(null);
 
-  const [showLevelsDialog,  setShowLevelsDialog]  = useState(false);
-  const [showResizeDialog,  setShowResizeDialog]  = useState(false);
-  const [showKernelDialog,  setShowKernelDialog]  = useState(false);
+  const [showLevelsDialog, setShowLevelsDialog] = useState(false);
+  const [showResizeDialog, setShowResizeDialog] = useState(false);
+  const [showKernelDialog, setShowKernelDialog] = useState(false);
 
   const [isBusy, setIsBusy] = useState(false);
 
   const areaRef = useRef(null);
 
-  // ─── Загрузка файла ───────────────────────────────────────────────────────
   const handleFileLoad = useCallback(async (file) => {
     setIsLoading(true);
     setError(null);
@@ -70,17 +68,15 @@ export default function App() {
       drawImage(result.imageData, initialScale);
       setScale(initialScale);
 
-      const count = getChannelCount(result.imageData);
-      const descs = getChannelDescriptors(count);
-      setChannelCount(count);
-      setChannelDescriptors(descs);
-      setActiveChannels(new Set(descs.map(d => d.id)));
+      setChannelCount(result.channelCount);
+      setChannelDescriptors(result.channelDescriptors);
+      setActiveChannels(new Set(result.channelDescriptors.map(d => d.id)));
 
       setImageInfo({
-        fileName:   result.fileName,
-        format:     result.format,
-        width:      result.width,
-        height:     result.height,
+        fileName: result.fileName,
+        format: result.format,
+        width: result.width,
+        height: result.height,
         colorDepth: result.colorDepth,
       });
     } catch (err) {
@@ -93,17 +89,16 @@ export default function App() {
     }
   }, [drawImage, clearCanvas]);
 
-  // ─── Масштаб ──────────────────────────────────────────────────────────────
   const handleScaleChange = useCallback((newScale) => {
     setScale(newScale);
     applyScale(newScale);
   }, [applyScale]);
 
-  // ─── Каналы ───────────────────────────────────────────────────────────────
   const handleChannelToggle = useCallback((channelId) => {
     setActiveChannels(prev => {
       const next = new Set(prev);
-      if (next.has(channelId)) next.delete(channelId); else next.add(channelId);
+      if (next.has(channelId)) next.delete(channelId);
+      else next.add(channelId);
       return next;
     });
   }, []);
@@ -113,24 +108,69 @@ export default function App() {
     redrawWithChannels(activeChannels, channelCount);
   }, [activeChannels, channelCount, imageInfo, redrawWithChannels]);
 
-  // ─── Пипетка ──────────────────────────────────────────────────────────────
-  const handlePipetteClick = useCallback((x, y) => {
+  const handlePipetteClick = useCallback((u, v) => {
     const original = getOriginalData();
     if (!original) return;
-    const cx = Math.max(0, Math.min(x, original.width  - 1));
-    const cy = Math.max(0, Math.min(y, original.height - 1));
-    const idx = (cy * original.width + cx) * 4;
-    const r = original.data[idx], g = original.data[idx+1],
-          b = original.data[idx+2], a = original.data[idx+3];
-    if (r === undefined) return;
-    setColorInfo({ x: cx, y: cy, r, g, b, a, lab: rgbToLab(r, g, b) });
-  }, [getOriginalData]);
 
-  // ─── Уровни ───────────────────────────────────────────────────────────────
+    const cx = Math.min(original.width - 1, Math.floor(u * original.width));
+    const cy = Math.min(original.height - 1, Math.floor(v * original.height));
+    const idx = (cy * original.width + cx) * 4;
+
+    let r = original.data[idx];
+    let g = original.data[idx + 1];
+    let b = original.data[idx + 2];
+    let a = original.data[idx + 3];
+    if (r === undefined) return;
+
+    const hasAlphaChannel = channelCount === 2 || channelCount === 4;
+
+    if (channelCount <= 2) {
+      const gray = (r === g && g === b) ? r : ((r * 77 + g * 150 + b * 29) >> 8);
+      const useGray = activeChannels.has('gray');
+      const useAlpha = activeChannels.has('alpha');
+      r = useGray ? gray : 0;
+      g = useGray ? gray : 0;
+      b = useGray ? gray : 0;
+      a = channelCount === 2 ? (useAlpha ? a : 255) : 255;
+    } else {
+      const useR = activeChannels.has('r');
+      const useG = activeChannels.has('g');
+      const useB = activeChannels.has('b');
+      const useAlpha = activeChannels.has('alpha');
+      const onlyAlpha = activeChannels.size === 1 && useAlpha;
+
+      if (activeChannels.size === 0) {
+        r = 0; g = 0; b = 0; a = 255;
+      } else if (onlyAlpha) {
+        r = a; g = a; b = a; a = 255;
+      } else {
+        r = useR ? r : 0;
+        g = useG ? g : 0;
+        b = useB ? b : 0;
+        a = channelCount === 4 ? (useAlpha ? a : 255) : 255;
+      }
+    }
+
+    setColorInfo({
+      x: cx,
+      y: cy,
+      r,
+      g,
+      b,
+      a,
+      hasAlpha: hasAlphaChannel,
+      lab: rgbToLab(r, g, b)
+    });
+  }, [getOriginalData, activeChannels, channelCount]);
+
   const handleLevelsApply = useCallback(async (luts) => {
     setIsBusy(true);
-    try { await applyLevels(luts); }
-    finally { setIsBusy(false); setShowLevelsDialog(false); }
+    try {
+      await applyLevels(luts);
+    } finally {
+      setIsBusy(false);
+      setShowLevelsDialog(false);
+    }
   }, [applyLevels]);
 
   const handleLevelsCancel = useCallback(() => {
@@ -138,7 +178,6 @@ export default function App() {
     setShowLevelsDialog(false);
   }, [previewLevels]);
 
-  // ─── Ресайз ───────────────────────────────────────────────────────────────
   const handleResizeApply = useCallback(async (width, height, methodId) => {
     setIsBusy(true);
     try {
@@ -152,22 +191,20 @@ export default function App() {
       applyScale(newScale);
       setScale(newScale);
       setImageInfo(prev => ({ ...prev, width: resized.width, height: resized.height }));
-      const count = getChannelCount(resized);
-      const descs = getChannelDescriptors(count);
-      setChannelCount(count);
-      setChannelDescriptors(descs);
-      setActiveChannels(new Set(descs.map(d => d.id)));
     } finally {
       setIsBusy(false);
       setShowResizeDialog(false);
     }
   }, [resizeImage, applyScale]);
 
-  // ─── Ядро свёртки ─────────────────────────────────────────────────────────
   const handleKernelApply = useCallback(async (params) => {
     setIsBusy(true);
-    try { await applyKernel(params); }
-    finally { setIsBusy(false); setShowKernelDialog(false); }
+    try {
+      await applyKernel(params);
+    } finally {
+      setIsBusy(false);
+      setShowKernelDialog(false);
+    }
   }, [applyKernel]);
 
   const handleKernelClose = useCallback(() => {
@@ -175,15 +212,14 @@ export default function App() {
     setShowKernelDialog(false);
   }, [previewKernel]);
 
-  // ─── Скачивание ───────────────────────────────────────────────────────────
   const handleDownload = useCallback((format) => {
-    const canvas = canvasRef.current;
-    if (!canvas || !imageInfo) return;
+    const original = getOriginalData();
+    if (!original || !imageInfo) return;
     const name = imageInfo.fileName;
-    if (format === 'png')      downloadAsPNG(canvas, name);
-    else if (format === 'jpg') downloadAsJPEG(canvas, name);
-    else if (format === 'gb7') downloadAsGB7(canvas, name);
-  }, [canvasRef, imageInfo]);
+    if (format === 'png')      downloadAsPNG(original, name);
+    else if (format === 'jpg') downloadAsJPEG(original, name);
+    else if (format === 'gb7') downloadAsGB7(original, name);
+  }, [getOriginalData, imageInfo]);
 
   return (
     <div className={styles.app}>
@@ -212,7 +248,7 @@ export default function App() {
           colorInfo={colorInfo}
           onColorInfoClose={() => setColorInfo(null)}
           scale={scale}
-          onScaleChange={handleScaleChange} // ← Связан зум колесом мыши через Ctrl
+          onScaleChange={handleScaleChange}
         />
         {imageInfo && (
           <ChannelPanel
@@ -231,6 +267,7 @@ export default function App() {
       {showLevelsDialog && imageInfo && (
         <LevelsDialog
           imageData={getOriginalData()}
+          channelCount={channelCount}
           onApply={handleLevelsApply}
           onCancel={handleLevelsCancel}
           onPreview={previewLevels}
@@ -248,6 +285,7 @@ export default function App() {
       {showKernelDialog && imageInfo && (
         <KernelDialog
           imageData={getOriginalData()}
+          channelCount={channelCount}
           onApply={handleKernelApply}
           onClose={handleKernelClose}
           onPreview={previewKernel}

@@ -1,33 +1,36 @@
+/* Холст и рабочая область */
 .area {
   flex: 1;
   overflow: auto;
   position: relative;
-
-  /* Нейтральный серый фон рабочей области */
-  background: #808080;
-
-  /* ИЗМЕНЕНА логика сетки: делаем флексом с padding буфером по краям 
-     для защиты от прилипания скроллов */
+  background: #2b2d32;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 100%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
   display: flex;
-  padding: 24px;
+  padding: 32px;
+  user-select: none;
 }
 
 .area::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 .area::-webkit-scrollbar-track {
-  background: #6f6f6f;
+  background: #202124;
 }
 
 .area::-webkit-scrollbar-thumb {
-  background: #9a9a9a;
-  border-radius: 4px;
+  background: #44474f;
+  border-radius: 5px;
+  border: 2px solid #202124;
 }
 
 .area::-webkit-scrollbar-thumb:hover {
-  background: #b0b0b0;
+  background: #5a5e69;
 }
 
 .placeholder {
@@ -37,94 +40,103 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
   pointer-events: none;
-  user-select: none;
+  padding: 24px;
 }
 
 .placeholderBox {
-  background: #f4f4f4;
-  border: 1.5px dashed #b8b8b8;
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border: 2px dashed #d1cbbd;
+  border-radius: 18px;
   padding: 48px 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  gap: 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+  transition: transform 0.2s, border-color 0.2s;
 }
 
 @media (max-width: 480px) {
   .placeholderBox {
-    padding: 32px 28px;
+    padding: 32px 24px;
   }
 }
 
 .placeholderIcon {
-  opacity: 0.45;
-  margin-bottom: 4px;
+  opacity: 0.6;
+  margin-bottom: 2px;
+  color: #1a1a1a;
 }
 
 .placeholderTitle {
   font-family: 'Geologica', sans-serif;
-  font-size: 15px;
-  color: #555555;
-  font-weight: 500;
+  font-size: 16px;
+  color: #1a1a1a;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .placeholderSub {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: #777777;
+  color: #777;
 }
 
 .placeholderFormats {
   display: flex;
-  gap: 6px;
-  margin-top: 4px;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 .tag {
-  padding: 3px 10px;
-  border: 1px solid #c9c9c9;
+  padding: 3px 12px;
+  border: 1px solid #dcd7ce;
   border-radius: 20px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  color: #666666;
-  background: #eeeeee;
+  font-size: 11px;
+  font-weight: 500;
+  color: #444;
+  background: #f4f1ea;
 }
 
 .tagAccent {
-  border-color: #9aaed0;
-  color: #365f9f;
-  background: #e4eaf5;
+  border-color: #bad3f8;
+  color: #1b52a4;
+  background: #eaf2fd;
 }
 
 .spinner {
-  width: 32px;
-  height: 32px;
-  border: 2.5px solid #cfcfcf;
-  border-top-color: #444444;
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e0ddd8;
+  border-top-color: #2563be;
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .canvas {
   display: block;
   image-rendering: pixelated;
   cursor: default;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
-
-  /* ИЗМЕНЕНИЯ ЦЕНТРОВКИ: Это самое безопасное 
-     центрирование, которое отлично работает при любом размере окна. */
   margin: auto;
   flex-shrink: 0;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 16px 48px rgba(0, 0, 0, 0.45);
+  background-image:
+    linear-gradient(45deg, #eee 25%, transparent 25%),
+    linear-gradient(-45deg, #eee 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eee 75%),
+    linear-gradient(-45deg, transparent 75%, #eee 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-color: #fff;
 }
 
 .canvasPipette {

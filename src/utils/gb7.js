@@ -5,11 +5,15 @@ const HEADER_SIZE = 12;
 export function decodeGB7(buffer) {
   const bytes = new Uint8Array(buffer);
 
+  if (bytes.length < HEADER_SIZE) {
+    throw new Error('Файл поврежден: размер меньше заголовка GB7');
+  }
+
   for (let i = 0; i < 4; i++) {
     if (bytes[i] !== SIGNATURE[i]) {
       throw new Error(
-        `Неверная сигнатура файла: ожидается 47 42 37 1D, ` +
-        `получено ${bytes[0].toString(16)} ${bytes[1].toString(16)} ` +
+        `Неверная сигнатура файла: ожидается 47 42 37 1D, получено ` +
+        `${bytes[0].toString(16)} ${bytes[1].toString(16)} ` +
         `${bytes[2].toString(16)} ${bytes[3].toString(16)}`
       );
     }
@@ -59,14 +63,17 @@ export function encodeGB7(imageData) {
 
   let hasMask = false;
   for (let i = 0; i < pixelCount; i++) {
-    if (data[i * 4 + 3] < 255) { hasMask = true; break; }
+    if (data[i * 4 + 3] < 255) {
+      hasMask = true;
+      break;
+    }
   }
 
   const fileBytes = new Uint8Array(HEADER_SIZE + pixelCount);
-  fileBytes[0] = 0x47;
-  fileBytes[1] = 0x42;
-  fileBytes[2] = 0x37;
-  fileBytes[3] = 0x1D;
+  fileBytes[0] = SIGNATURE[0];
+  fileBytes[1] = SIGNATURE[1];
+  fileBytes[2] = SIGNATURE[2];
+  fileBytes[3] = SIGNATURE[3];
   fileBytes[4] = VERSION;
   fileBytes[5] = hasMask ? 0x01 : 0x00;
   fileBytes[6] = (width >> 8) & 0xFF;
@@ -78,17 +85,21 @@ export function encodeGB7(imageData) {
 
   for (let i = 0; i < pixelCount; i++) {
     const o = i * 4;
-    const gray = Math.round(0.299 * data[o] + 0.587 * data[o+1] + 0.114 * data[o+2]);
-    const gray7 = Math.round((gray / 255) * 127);
-    const maskBit = data[o + 3] > 128 ? 1 : 0;
-    fileBytes[HEADER_SIZE + i] = (maskBit << 7) | (gray7 & 0x7F);
+    const gray = Math.round(0.299 * data[o] + 0.587 * data[o + 1] + 0.114 * data[o + 2]);
+    const gray7 = Math.round((gray / 255) * 127) & 0x7F;
+    let byteVal = gray7;
+    if (hasMask) {
+      const maskBit = data[o + 3] >= 128 ? 1 : 0;
+      byteVal |= (maskBit << 7);
+    }
+    fileBytes[HEADER_SIZE + i] = byteVal;
   }
 
   return fileBytes;
 }
 
 export function isGB7(buffer) {
-  if (buffer.byteLength < 4) return false;
+  if (!buffer || buffer.byteLength < 4) return false;
   const b = new Uint8Array(buffer, 0, 4);
-  return b[0] === 0x47 && b[1] === 0x42 && b[2] === 0x37 && b[3] === 0x1D;
+  return b[0] === SIGNATURE[0] && b[1] === SIGNATURE[1] && b[2] === SIGNATURE[2] && b[3] === SIGNATURE[3];
 }

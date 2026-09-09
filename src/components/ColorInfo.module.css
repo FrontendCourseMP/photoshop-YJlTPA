@@ -1,19 +1,20 @@
+/* Всплывающая пипетка */
 .popup {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 20px;
+  right: 20px;
   z-index: 100;
-  width: 180px;
+  width: 196px;
   background: #ffffff;
-  border: 1px solid #e0ddd8;
-  border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid #ded9ce;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
   overflow: hidden;
-  animation: popIn 0.15s ease;
+  animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes popIn {
-  from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+  from { opacity: 0; transform: scale(0.94) translateY(-6px); }
   to   { opacity: 1; transform: scale(1)    translateY(0);    }
 }
 
@@ -21,8 +22,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px 6px;
-  border-bottom: 1px solid #ede9e3;
+  padding: 9px 12px 7px;
+  border-bottom: 1px solid #ede8de;
+  background: #faf8f4;
 }
 
 .title {
@@ -30,76 +32,77 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #aaa;
+  font-weight: 600;
+  color: #7a766e;
 }
 
 .close {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 10px;
-  color: #bbb;
-  padding: 0;
+  font-size: 12px;
+  color: #9c978f;
+  padding: 0 2px;
   line-height: 1;
   transition: color 0.1s;
 }
 
-.close:hover {
-  color: #555;
-}
+.close:hover { color: #1a1a1a; }
 
-/* Шахматный фон под прозрачность + сам цвет поверх */
 .swatchWrap {
-  height: 36px;
+  height: 38px;
   width: 100%;
   background-image:
-    linear-gradient(45deg, #ddd 25%, transparent 25%),
-    linear-gradient(-45deg, #ddd 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #ddd 75%),
-    linear-gradient(-45deg, transparent 75%, #ddd 75%);
+    linear-gradient(45deg, #e5e5e5 25%, transparent 25%),
+    linear-gradient(-45deg, #e5e5e5 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e5e5e5 75%),
+    linear-gradient(-45deg, transparent 75%, #e5e5e5 75%);
   background-size: 8px 8px;
   background-position: 0 0, 0 4px, 4px -4px, -4px 0;
   background-color: #fff;
+  border-bottom: 1px solid #ede8de;
 }
 
 .colorSwatch {
   width: 100%;
   height: 100%;
+  transition: background-color 0.1s ease;
 }
 
 .rows {
-  padding: 6px 0 4px;
+  padding: 6px 0;
 }
 
 .row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2px 10px;
+  padding: 2px 12px;
 }
 
 .label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: #aaa;
+  color: #8c8983;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  font-weight: 500;
 }
 
 .value {
   font-family: 'Geologica', sans-serif;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: #1a1a1a;
 }
 
 .mono {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .sep {
   height: 1px;
-  background: #ede9e3;
-  margin: 4px 0;
+  background: #ede8de;
+  margin: 5px 0;
 }

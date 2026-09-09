@@ -1,72 +1,77 @@
+/* Верхняя панель управления */
 .toolbar {
   display: flex;
   align-items: center;
   background: #ffffff;
-  border-bottom: 1px solid #e0ddd8;
+  border-bottom: 1px solid #e4e0d9;
   padding: 0 16px;
   height: 52px;
   flex-shrink: 0;
   gap: 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  z-index: 10;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .toolbar {
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 0 10px;
+    padding: 0 12px;
     height: 48px;
   }
 }
 
-.toolbar::-webkit-scrollbar { height: 2px; }
-.toolbar::-webkit-scrollbar-thumb { background: #ddd; }
+.toolbar::-webkit-scrollbar { height: 3px; }
+.toolbar::-webkit-scrollbar-thumb { background: #dcd7ce; border-radius: 3px; }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
+  padding-right: 4px;
 }
 
 .brandMark {
-  width: 22px;
-  height: 22px;
-  background: #1a1a1a;
-  border-radius: 5px;
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .brandMarkInner {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   background: #f5f5f0;
-  border-radius: 2px;
-  opacity: 0.9;
+  border-radius: 3px;
+  opacity: 0.95;
 }
 
 .brandName {
   font-family: 'Geologica', sans-serif;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1a1a;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .brandSub {
   font-family: 'JetBrains Mono', monospace;
   font-size: 10px;
-  color: #aaa;
+  color: #8c8983;
   letter-spacing: 0.02em;
 }
 
 .divider {
   width: 1px;
-  height: 22px;
-  background: #e8e5e0;
+  height: 24px;
+  background: #e8e4dc;
   margin: 0 14px;
   flex-shrink: 0;
 }
@@ -74,92 +79,98 @@
 .group {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .groupLabel {
   font-size: 10px;
-  color: #aaa;
-  margin-right: 4px;
+  color: #9c978f;
+  margin-right: 6px;
   font-family: 'JetBrains Mono', monospace;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
+  font-weight: 500;
   white-space: nowrap;
 }
 
-@media (max-width: 480px) {
-  .groupLabel {
-    display: none;
-  }
+@media (max-width: 600px) {
+  .groupLabel { display: none; }
 }
 
 .btn {
-  height: 30px;
-  padding: 0 12px;
-  background: #f0ede8;
-  border: 1px solid #ddd9d3;
-  color: #444;
+  height: 32px;
+  padding: 0 13px;
+  background: #f6f4ef;
+  border: 1px solid #ddd8ce;
+  color: #2b2a28;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
-  letter-spacing: 0.03em;
+  transition: all 0.15s ease;
+  letter-spacing: 0.02em;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .btn:hover:not(:disabled) {
-  background: #e8e4de;
-  border-color: #c8c4be;
-  color: #1a1a1a;
+  background: #ede8df;
+  border-color: #cac4b8;
+  color: #000000;
   transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
 }
 
 .btn:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .btn:disabled {
-  opacity: 0.35;
+  opacity: 0.38;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btnPrimary {
   background: #1a1a1a;
   border-color: #1a1a1a;
-  color: #f5f5f0;
+  color: #ffffff;
 }
 
 .btnPrimary:hover:not(:disabled) {
-  background: #2d2d2d;
-  border-color: #2d2d2d;
+  background: #2e2e2e;
+  border-color: #2e2e2e;
   color: #ffffff;
 }
 
 .btnAccent {
-  background: #eef4ff;
-  border-color: #c5d8f5;
-  color: #2563be;
+  background: #edf4fe;
+  border-color: #c0d8fa;
+  color: #1958b7;
+  font-weight: 600;
 }
 
 .btnAccent:hover:not(:disabled) {
-  background: #ddeaff;
-  border-color: #9ab9ed;
-  color: #1a4fa0;
+  background: #dbeaff;
+  border-color: #9ec2f5;
+  color: #104494;
 }
 
 .btnActive {
   background: #1a1a1a;
   border-color: #1a1a1a;
-  color: #f5f5f0;
+  color: #ffffff;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .btnActive:hover:not(:disabled) {
-  background: #2d2d2d;
-  border-color: #2d2d2d;
+  background: #2e2e2e;
+  border-color: #2e2e2e;
   color: #ffffff;
 }

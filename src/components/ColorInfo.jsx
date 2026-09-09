@@ -3,7 +3,7 @@ import styles from './ColorInfo.module.css';
 export default function ColorInfo({ info, onClose }) {
   if (!info) return null;
 
-  const { x, y, r, g, b, a, lab } = info;
+  const { x, y, r, g, b, a, hasAlpha, lab } = info;
 
   const toHex = (v) => v.toString(16).padStart(2, '0').toUpperCase();
   const hex = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
@@ -40,7 +40,7 @@ export default function ColorInfo({ info, onClose }) {
           <span className={styles.label}>B</span>
           <span className={styles.value}>{b}</span>
         </div>
-        {a < 255 && (
+        {hasAlpha && (
           <div className={styles.row}>
             <span className={styles.label}>A</span>
             <span className={styles.value}>{a}</span>

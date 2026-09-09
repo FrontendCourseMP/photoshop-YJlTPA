@@ -1,26 +1,49 @@
 .dialog {
-  border: none;
+  border: 1px solid #ddd9d3;
   border-radius: 12px;
   padding: 0;
   width: 420px;
-  max-width: 95vw;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
   background: #fff;
   font-family: 'Geologica', sans-serif;
   overflow: visible;
+  position: fixed;
+  margin: auto;
+  z-index: 1000;
+  outline: none;
 }
 
 .dialog::backdrop {
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
 }
 
-/* ─── Заголовок ──────────────────────────────────────────── */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px 12px;
+  padding: 14px 18px 12px;
   border-bottom: 1px solid #eee;
+  background: #faf8f5;
+  cursor: grab;
+  user-select: none;
+}
+
+.header:active {
+  cursor: grabbing;
+}
+
+.headerTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dragIcon {
+  color: #999;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .title {
@@ -39,10 +62,9 @@
   border-radius: 4px;
   transition: background 0.1s;
 }
-.closeBtn:hover          { background: #f0f0f0; color: #333; }
-.closeBtn:disabled       { opacity: 0.4; cursor: not-allowed; }
+.closeBtn:hover { background: #f0f0f0; color: #333; }
+.closeBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ─── Тело ───────────────────────────────────────────────── */
 .body {
   padding: 16px 20px;
   display: flex;
@@ -51,7 +73,6 @@
   overflow: visible;
 }
 
-/* ─── Блок мегапикселей ──────────────────────────────────── */
 .mpxRow {
   display: flex;
   align-items: center;
@@ -83,18 +104,11 @@
   color: #1a1a1a;
 }
 
-.mpxSub {
-  font-size: 11px;
-  color: #888;
-  font-family: 'JetBrains Mono', monospace;
-}
-
 .mpxArrow {
   font-size: 20px;
   color: #ccc;
 }
 
-/* ─── Строки формы ───────────────────────────────────────── */
 .row {
   display: flex;
   align-items: center;
@@ -126,8 +140,8 @@
   outline: none;
   transition: border-color 0.15s;
 }
-.input:focus     { border-color: #1a1a1a; }
-.inputError      { border-color: #e53e3e !important; }
+.input:focus { border-color: #1a1a1a; }
+.inputError { border-color: #e53e3e !important; }
 
 .unit {
   font-size: 12px;
@@ -152,7 +166,7 @@
   cursor: pointer;
   outline: none;
 }
-.select:focus    { border-color: #1a1a1a; }
+.select:focus { border-color: #1a1a1a; }
 .select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .checkLabel {
@@ -164,7 +178,6 @@
   color: #333;
 }
 
-/* ─── Интерполяция + тултип ──────────────────────────────── */
 .interpolationWrap {
   display: flex;
   align-items: center;
@@ -182,16 +195,15 @@
 
 .tooltipText {
   position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
+  right: 0;
+  top: calc(100% + 8px);
   background: #1a1a1a;
   color: #fff;
   font-size: 12px;
   line-height: 1.5;
   padding: 8px 12px;
   border-radius: 8px;
-  width: 210px;
+  width: 220px;
   z-index: 9999;
   pointer-events: none;
   white-space: normal;
@@ -201,7 +213,6 @@
 
 .tooltip:hover .tooltipText { opacity: 1; }
 
-/* ─── Футер ──────────────────────────────────────────────── */
 .footer {
   display: flex;
   align-items: center;
@@ -209,12 +220,6 @@
   gap: 10px;
   padding: 12px 20px 16px;
   border-top: 1px solid #eee;
-}
-
-.processingText {
-  font-size: 12px;
-  color: #888;
-  margin-right: auto;
 }
 
 .btnCancel {
@@ -227,8 +232,8 @@
   color: #555;
   transition: background 0.1s;
 }
-.btnCancel:hover     { background: #f5f5f5; }
-.btnCancel:disabled  { opacity: 0.5; cursor: not-allowed; }
+.btnCancel:hover { background: #f5f5f5; }
+.btnCancel:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btnApply {
   padding: 8px 18px;
@@ -245,10 +250,9 @@
   justify-content: center;
   transition: background 0.1s;
 }
-.btnApply:hover    { background: #333; }
+.btnApply:hover { background: #333; }
 .btnApply:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ─── Спиннер в кнопке ───────────────────────────────────── */
 .spinner {
   display: inline-block;
   width: 14px;

@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect } from 'react';
 import ColorInfo from './ColorInfo';
-import { clampScale, SCALE_PRESETS } from '../utils/scaleUtils';
+import { SCALE_PRESETS } from '../utils/scaleUtils';
 import styles from './CanvasArea.module.css';
 
 const CanvasArea = forwardRef(function CanvasArea({
@@ -12,8 +12,8 @@ const CanvasArea = forwardRef(function CanvasArea({
   onPipetteClick,
   colorInfo,
   onColorInfoClose,
-  scale,         // масштаб в % (например 50, 100, 200)
-  onScaleChange, // колбэк для Ctrl+колесо
+  scale,
+  onScaleChange,
 }, ref) {
   const handleDragOver = (e) => e.preventDefault();
 
@@ -28,19 +28,16 @@ const CanvasArea = forwardRef(function CanvasArea({
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
 
-    // CSS-пиксели → координаты в оригинальном изображении
-    // canvas.width = origWidth * (scale/100)
-    // origX = (cssX / rect.width) * canvas.width / (scale/100)
     const cssX = e.clientX - rect.left;
     const cssY = e.clientY - rect.top;
 
-    const origX = Math.floor((cssX / rect.width) * canvas.width / ((scale ?? 100) / 100));
-    const origY = Math.floor((cssY / rect.height) * canvas.height / ((scale ?? 100) / 100));
+    // Нормализованные координаты клика [0, 1]
+    const u = Math.max(0, Math.min(1, cssX / rect.width));
+    const v = Math.max(0, Math.min(1, cssY / rect.height));
 
-    onPipetteClick(origX, origY);
+    onPipetteClick(u, v);
   };
 
-  // Ctrl + колесо мыши → масштаб
   const handleWheel = useCallback((e) => {
     if (!e.ctrlKey || !onScaleChange) return;
     e.preventDefault();
@@ -54,7 +51,6 @@ const CanvasArea = forwardRef(function CanvasArea({
     }
   }, [scale, onScaleChange]);
 
-  // passive: false нужен чтобы можно было e.preventDefault()
   useEffect(() => {
     const el = ref && typeof ref === 'object' ? ref.current : null;
     if (!el) return;

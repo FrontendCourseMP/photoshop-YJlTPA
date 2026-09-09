@@ -15,24 +15,40 @@ function stripExt(fileName) {
   return fileName.replace(/\.[^/.]+$/, '');
 }
 
-export function downloadAsPNG(canvas, fileName) {
-  canvas.toBlob((blob) => saveBlob(blob, `${stripExt(fileName)}.png`), 'image/png');
-}
-
-export function downloadAsJPEG(canvas, fileName, quality = 0.92) {
-  const flat = document.createElement('canvas');
-  flat.width = canvas.width;
-  flat.height = canvas.height;
-  const ctx = flat.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, flat.width, flat.height);
-  ctx.drawImage(canvas, 0, 0);
-  flat.toBlob((blob) => saveBlob(blob, `${stripExt(fileName)}.jpg`), 'image/jpeg', quality);
-}
-
-export function downloadAsGB7(canvas, fileName) {
+function createFullCanvas(imageData) {
+  const canvas = document.createElement('canvas');
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
   const ctx = canvas.getContext('2d');
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+export function downloadAsPNG(imageData, fileName) {
+  const canvas = createFullCanvas(imageData);
+  canvas.toBlob((blob) => {
+    if (blob) saveBlob(blob, `${stripExt(fileName)}.png`);
+  }, 'image/png');
+}
+
+export function downloadAsJPEG(imageData, fileName, quality = 0.92) {
+  const canvas = document.createElement('canvas');
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const temp = createFullCanvas(imageData);
+  ctx.drawImage(temp, 0, 0);
+
+  canvas.toBlob((blob) => {
+    if (blob) saveBlob(blob, `${stripExt(fileName)}.jpg`);
+  }, 'image/jpeg', quality);
+}
+
+export function downloadAsGB7(imageData, fileName) {
   const bytes = encodeGB7(imageData);
   const blob = new Blob([bytes], { type: 'application/octet-stream' });
   saveBlob(blob, `${stripExt(fileName)}.gb7`);

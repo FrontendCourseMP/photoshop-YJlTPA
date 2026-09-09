@@ -1,13 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { KERNEL_PRESETS, DEFAULT_PRESET_ID, isIdentityKernel } from '../utils/kernelPresets';
 import styles from './KernelDialog.module.css';
-
-const CHANNEL_OPTIONS = [
-  { id: 'r',     label: 'R (Red)'   },
-  { id: 'g',     label: 'G (Green)' },
-  { id: 'b',     label: 'B (Blue)'  },
-  { id: 'alpha', label: 'A (Alpha)' },
-];
 
 const PADDING_OPTIONS = [
   { id: 'black',     label: 'Заполнение чёрным' },
@@ -51,19 +44,56 @@ function parseKernelStrings(strs) {
   return { vals, errIndices };
 }
 
-export default function KernelDialog({ imageData, onApply, onClose, onPreview }) {
+export default function KernelDialog({ channelCount = 3, onApply, onClose, onPreview }) {
   const dialogRef = useRef(null);
-  const rafRef    = useRef(null);
+  const rafRef = useRef(null);
+
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ startX: 0, startY: 0, initialPosX: 0, initialPosY: 0 });
+
+  const availableChannelOptions = useMemo(() => {
+    if (channelCount === 1) {
+      return [{ id: 'gray', label: 'Gray' }];
+    }
+    if (channelCount === 2) {
+      return [
+        { id: 'gray',  label: 'Gray' },
+        { id: 'alpha', label: 'A (Alpha)' }
+      ];
+    }
+    if (channelCount === 3) {
+      return [
+        { id: 'r', label: 'R (Red)' },
+        { id: 'g', label: 'Green' },
+        { id: 'b', label: 'Blue' }
+      ];
+    }
+    return [
+      { id: 'r',     label: 'R (Red)' },
+      { id: 'g',     label: 'Green' },
+      { id: 'b',     label: 'Blue' },
+      { id: 'alpha', label: 'A (Alpha)' }
+    ];
+  }, [channelCount]);
 
   const defaultPreset = KERNEL_PRESETS.find(p => p.id === DEFAULT_PRESET_ID);
 
-  const [presetId,   setPresetId]   = useState(DEFAULT_PRESET_ID);
+  const [presetId, setPresetId] = useState(DEFAULT_PRESET_ID);
   const [kernelStrs, setKernelStrs] = useState(() => defaultPreset.kernel.map(formatKernelValue));
-  const [channels,   setChannels]   = useState(() => new Set(['r', 'g', 'b']));
-  const [padding,    setPadding]    = useState('black');
-  const [preview,    setPreview]    = useState(true);
+  const [channels, setChannels] = useState(() => new Set(availableChannelOptions.map(c => c.id)));
+  const [prevChannelCount, setPrevChannelCount] = useState(channelCount);
+
+  // Официальный паттерн React 19: синхронизация стейта при смене пропса во время рендера без useEffect
+  if (prevChannelCount !== channelCount) {
+    setPrevChannelCount(channelCount);
+    setChannels(new Set(availableChannelOptions.map(c => c.id)));
+  }
+
+  const [padding, setPadding] = useState('black');
+  const [preview, setPreview] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
-  const [progress,   setProgress]   = useState(0);
+  const [progress, setProgress] = useState(0);
   const [errIndices, setErrIndices] = useState([]);
 
   const stateRef = useRef({ kernelStrs, channels, padding, preview });
@@ -71,20 +101,71 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     stateRef.current = { kernelStrs, channels, padding, preview };
   });
 
+  const handleClose = useCallback(() => {
+    if (isApplying) return;
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    onPreview(null);
+    onClose();
+  }, [isApplying, onPreview, onClose]);
+
   useEffect(() => {
     const dlg = dialogRef.current;
     if (!dlg) return;
-    dlg.showModal();
-    const handleClose = () => onClose();
-    dlg.addEventListener('close', handleClose);
-    return () => dlg.removeEventListener('close', handleClose);
-  }, [onClose]);
+    if (!dlg.open) {
+      dlg.showModal();
+    }
+    const cancelHandler = (e) => {
+      e.preventDefault();
+      handleClose();
+    };
+    dlg.addEventListener('cancel', cancelHandler);
+    return () => dlg.removeEventListener('cancel', cancelHandler);
+  }, [handleClose]);
+
+  const handleMouseDownHeader = (e) => {
+    if (e.target.tagName === 'BUTTON') return;
+    isDraggingRef.current = true;
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initialPosX: pos.x,
+      initialPosY: pos.y,
+    };
+
+    const handleMouseMove = (moveEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = moveEvent.clientX - dragStartRef.current.startX;
+      const dy = moveEvent.clientY - dragStartRef.current.startY;
+      setPos({
+        x: dragStartRef.current.initialPosX + dx,
+        y: dragStartRef.current.initialPosY + dy,
+      });
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
 
   const getChannelIndices = useCallback((ch) => {
+    if (channelCount <= 2) {
+      const res = [];
+      if (ch.has('gray')) res.push('gray');
+      if (ch.has('alpha')) res.push(3);
+      return res;
+    }
     return [...ch]
       .map(c => ['r', 'g', 'b', 'alpha'].indexOf(c))
       .filter(i => i !== -1);
-  }, []);
+  }, [channelCount]);
 
   const schedulePreview = useCallback(() => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -119,7 +200,7 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [kernelStrs, channels, padding, preview]);
+  }, [kernelStrs, channels, padding, preview, schedulePreview, onPreview]);
 
   const handlePresetChange = useCallback((id) => {
     if (id === 'custom') return;
@@ -158,10 +239,10 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     const preset = KERNEL_PRESETS.find(p => p.id === DEFAULT_PRESET_ID);
     setPresetId(DEFAULT_PRESET_ID);
     setKernelStrs(preset.kernel.map(formatKernelValue));
-    setChannels(new Set(['r', 'g', 'b']));
+    setChannels(new Set(availableChannelOptions.map(c => c.id)));
     setPadding('black');
     setErrIndices([]);
-  }, []);
+  }, [availableChannelOptions]);
 
   const handleApply = useCallback(async () => {
     const { vals, errIndices: errs } = parseKernelStrings(kernelStrs);
@@ -183,8 +264,8 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
 
     try {
       await onApply({
-        kernel:     vals,
-        channels:   chIndices,
+        kernel: vals,
+        channels: chIndices,
         padding,
         onProgress: (pct) => setProgress(pct),
       });
@@ -193,16 +274,6 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
       setIsApplying(false);
     }
   }, [kernelStrs, channels, padding, onApply, getChannelIndices]);
-
-  const handleClose = useCallback(() => {
-    if (isApplying) return;
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-    onPreview(null);
-    dialogRef.current?.close();
-  }, [isApplying, onPreview]);
 
   const handlePreviewToggle = useCallback((e) => {
     const checked = e.target.checked;
@@ -218,19 +289,22 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
     <dialog
       ref={dialogRef}
       className={styles.dialog}
-      onClick={(e) => { if (e.target === dialogRef.current) handleClose(); }}
+      style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
     >
-      <div className={styles.inner} onClick={(e) => e.stopPropagation()}>
-
-        <div className={styles.header}>
-          <span className={styles.title}>Фильтрация ядром (Kernel)</span>
-          <button className={styles.closeBtn} onClick={handleClose} disabled={isApplying}>
-            ✕
-          </button>
+      <div className={styles.inner}>
+        <div
+          className={styles.header}
+          onMouseDown={handleMouseDownHeader}
+          title="Зажмите для перетаскивания окна"
+        >
+          <div className={styles.headerTitleWrap}>
+            <span className={styles.dragIcon}>⠿</span>
+            <span className={styles.title}>Фильтрация ядром (Kernel)</span>
+          </div>
+          <button className={styles.closeBtn} onClick={handleClose} disabled={isApplying}>✕</button>
         </div>
 
         <div className={styles.body}>
-
           <div className={styles.row}>
             <label htmlFor="kernel-preset-select" className={styles.label}>Пресет</label>
             <select
@@ -285,7 +359,7 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
           <div className={styles.section}>
             <div className={styles.sectionTitle}>Применить к каналам</div>
             <div className={styles.channelRow}>
-              {CHANNEL_OPTIONS.map((ch) => (
+              {availableChannelOptions.map((ch) => (
                 <label key={ch.id} htmlFor={`kernel-ch-${ch.id}`} className={styles.checkLabel}>
                   <input
                     id={`kernel-ch-${ch.id}`}
@@ -327,7 +401,7 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
                 onChange={handlePreviewToggle}
                 disabled={isApplying}
               />
-              Предпросмотр (быстро, на уменьшенной копии ≤300px)
+              Предпросмотр (в реальном времени)
             </label>
           </div>
 
@@ -337,47 +411,20 @@ export default function KernelDialog({ imageData, onApply, onClose, onPreview })
                 Обработка полного изображения… {progress}%
               </div>
               <div className={styles.progressTrack}>
-                <div
-                  className={styles.progressBar}
-                  style={{ width: `${progress}%` }}
-                />
+                <div className={styles.progressBar} style={{ width: `${progress}%` }} />
               </div>
             </div>
           )}
-
         </div>
 
         <div className={styles.footer}>
-          <button
-            className={styles.btnSecondary}
-            onClick={handleReset}
-            disabled={isApplying}
-          >
-            Сброс
-          </button>
-
+          <button className={styles.btnSecondary} onClick={handleReset} disabled={isApplying}>Сброс</button>
           <div style={{ flex: 1 }} />
-
-          <button
-            className={styles.btnSecondary}
-            onClick={handleClose}
-            disabled={isApplying}
-          >
-            Закрыть
-          </button>
-
-          <button
-            className={styles.btnPrimary}
-            onClick={handleApply}
-            disabled={isApplying || hasErrors}
-          >
-            {isApplying
-              ? <span className={styles.spinner} />
-              : 'Применить'
-            }
+          <button className={styles.btnSecondary} onClick={handleClose} disabled={isApplying}>Закрыть</button>
+          <button className={styles.btnPrimary} onClick={handleApply} disabled={isApplying || hasErrors}>
+            {isApplying ? <span className={styles.spinner} /> : 'Применить'}
           </button>
         </div>
-
       </div>
     </dialog>
   );
