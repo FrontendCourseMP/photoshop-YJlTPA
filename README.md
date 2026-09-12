@@ -8,7 +8,7 @@
 Группа: 231-322  
 
 **Ссылки:**  
-* Демо-версия: https://sweet-biscuit-5f3bf5.netlify.app/
+* Демо-версия: https://photoshop-yjltpa.onrender.com/
 * Репозиторий: https://github.com/FrontendCourseMP/photoshop-YJlTPA.git
 
 ---
